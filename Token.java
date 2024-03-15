@@ -44,4 +44,5 @@ public class Token {
                 ", lineNumber=" + lineNumber +
                 '}';
     }
+
 }
