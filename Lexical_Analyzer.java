@@ -51,5 +51,8 @@ public class Lexical_Analyzer {
     return tokens;
     }
 
+    private static List<Token> tokenizeLine(String Line,int lineNumber){
+        List<Token> tokens = new ArrayList<>();
 
+    }
 }
