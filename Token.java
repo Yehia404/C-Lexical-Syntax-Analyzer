@@ -6,11 +6,23 @@ public class Token {
 //    }
     private String type;
     private int lineNumber;
-    private java.lang.String value;
-    public Token(String t, int lineNumber, java.lang.String val) {
+    private String value;
+
+    //private int hashIndex;
+    private boolean isVar;
+    private static int counter = 0 ;
+
+    public Token(String t, int lineNumber, String val) {
         type = t;
         this.lineNumber = lineNumber;
         value = val;
+    }
+    public Token(String t, int lineNumber, String val, boolean isVar){
+        type = t;
+        this.lineNumber = lineNumber;
+        value = val;
+        isVar = true;
+        counter++;
     }
 
 
@@ -36,6 +48,11 @@ public class Token {
     public void setValue(java.lang.String value) {
         this.value = value;
     }
+
+    public int getHashIndex() {
+        return counter;
+    }
+
     @Override
     public String toString() {
         return "Token{" +
