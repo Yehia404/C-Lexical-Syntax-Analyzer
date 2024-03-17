@@ -7,8 +7,6 @@ public class Token {
     private String type;
     private int lineNumber;
     private String value;
-
-    //private int hashIndex;
     private boolean isVar;
     private static int counter = 0 ;
 
@@ -35,7 +33,7 @@ public class Token {
         return lineNumber;
     }
 
-    public java.lang.String getValue() {
+    public String getValue() {
         return value;
     }
 
@@ -45,7 +43,7 @@ public class Token {
     public void setType(String type) {
         this.type = type;
     }
-    public void setValue(java.lang.String value) {
+    public void setValue(String value) {
         this.value = value;
     }
 
