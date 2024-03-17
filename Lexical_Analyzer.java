@@ -16,7 +16,7 @@ public class Lexical_Analyzer {
     private static final String  PRE_PROCESSOR_PATTERN = "#\\s*\\w+";
     private static HashMap<Integer, String> symbolTable;
     public static void main(String[] args){
-        String sourceCodeFile = "test.c";
+        String sourceCodeFile = "test2.c";
         symbolTable = new HashMap<>();
         List <Token> tokens = tokenizeSourceCode(sourceCodeFile);
         for (Token token : tokens) {
