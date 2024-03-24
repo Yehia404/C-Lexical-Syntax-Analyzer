@@ -1,8 +1,9 @@
 #include <stdio.h>
 
 int main() {
-    int a = 10;
+    float a = 10;
     int b = 20;
+    char c = 'b'
     int sum = a + b;
     printf("The sum is: %d", sum);
     return 0;

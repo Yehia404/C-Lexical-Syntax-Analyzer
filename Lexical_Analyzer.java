@@ -9,14 +9,15 @@ public class Lexical_Analyzer {
     private static final String KEYWORD_PATTERN = "\\b(auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|int|long|register|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while)\\b";
     private static final String OPERATOR_PATTERN = "[-+*/%<>=!&|~^]+";
     private static final String IDENTIFIER_PATTERN = "[a-zA-Z_]\\w*";
-    private static final String NUMBER_PATTERN = "\\d+";
+    private static final String NUMBER_PATTERN = "[-+]?(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?";
     private static final String STRING_PATTERN = "\"([^\"]*)\"";
+    private static final String CHAR_PATTERN = "'.'";
     private static final String SYMBOL_PATTERN = "[(){}\\[\\];,\\.]";
 
     private static final String  PRE_PROCESSOR_PATTERN = "#\\s*\\w+";
     private static HashMap<Integer, String> symbolTable;
     public static void main(String[] args){
-        String sourceCodeFile = "test2.c";
+        String sourceCodeFile = "test.c";
         symbolTable = new HashMap<>();
         List <Token> tokens = tokenizeSourceCode(sourceCodeFile);
         for (Token token : tokens) {
@@ -53,6 +54,7 @@ public class Lexical_Analyzer {
                         IDENTIFIER_PATTERN + "|" +
                         NUMBER_PATTERN + "|" +
                         STRING_PATTERN + "|" +
+                        CHAR_PATTERN + "|" +
                         SYMBOL_PATTERN + "|" +
                         PRE_PROCESSOR_PATTERN
 
@@ -74,8 +76,10 @@ public class Lexical_Analyzer {
                 tokenType = "NUMBER";
             } else if (tokenValue.matches(STRING_PATTERN)) {
                 tokenType = "STRING";
-            } else if (tokenValue.matches(SYMBOL_PATTERN)) {
-                tokenType = "SYMBOL";
+            } else if (tokenValue.matches(CHAR_PATTERN)) {
+                 tokenType = "CHAR";
+            }else if (tokenValue.matches(SYMBOL_PATTERN)) {
+                 tokenType = "SYMBOL";
             } else {
                 tokenType = "UNKNOWN";
             }
