@@ -13,7 +13,6 @@ public class Lexical_Analyzer {
     private static final String STRING_PATTERN = "\"([^\"]*)\"";
     private static final String CHAR_PATTERN = "'.'";
     private static final String SYMBOL_PATTERN = "[(){}\\[\\];,\\.]";
-
     private static final String  PRE_PROCESSOR_PATTERN = "#\\s*\\w+";
     private static HashMap<Integer, String> symbolTable;
     public static void main(String[] args){
@@ -81,7 +80,7 @@ public class Lexical_Analyzer {
             }else if (tokenValue.matches(SYMBOL_PATTERN)) {
                  tokenType = "SYMBOL";
             } else {
-                tokenType = "UNKNOWN";
+                tokenType = "ERROR";
             }
 
             if(tokenType.equals("IDENTIFIER")){
