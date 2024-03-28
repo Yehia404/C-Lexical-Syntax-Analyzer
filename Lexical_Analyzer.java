@@ -16,12 +16,14 @@ public class Lexical_Analyzer {
     private static final String  PRE_PROCESSOR_PATTERN = "#\\s*\\w+";
     private static HashMap<Integer, String> symbolTable;
     public static void main(String[] args){
-        String sourceCodeFile = "test.c";
+        String sourceCodeFile = "test2.c";
         symbolTable = new HashMap<>();
         List <Token> tokens = tokenizeSourceCode(sourceCodeFile);
+        System.out.println("<------------------------------Tokens------------------------------>");
         for (Token token : tokens) {
             System.out.println(token);
         }
+        System.out.println("<----------SYMBOL TABLE---------->");
         for(Integer i : symbolTable.keySet()){
             String var = symbolTable.get(i);
             System.out.println("index:  " + i+"   variable:  "+var);
@@ -84,7 +86,9 @@ public class Lexical_Analyzer {
             }
 
             if(tokenType.equals("IDENTIFIER")){
-                if(symbolTable.containsValue(tokenValue)){
+                if(symbolTable.containsValue(tokenValue)) {
+                    Token token = new Token(tokenType,lineNumber,tokenValue);
+                    tokens.add(token);
                     continue;
                 }
                 Token token = new Token(tokenType,lineNumber,tokenValue,true);

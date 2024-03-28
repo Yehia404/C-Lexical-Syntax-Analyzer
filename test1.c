@@ -8,10 +8,17 @@ int factorial(int n) {
 }
 
 int main() {
-    int number = 5;
-    int result = factorial(number);
+    int num;
+    printf("Enter a number: ");
+    scanf("%d", &num);
 
-    printf("The factorial of %d is %d\n", number, result);
+    if (num < 0) {
+        printf("Error: Factorial is not defined for negative numbers.\n");
+        return 1;
+    }
+
+    int result = factorial(num);
+    printf("The factorial of %d is %d\n", num, result);
 
     return 0;
 }
