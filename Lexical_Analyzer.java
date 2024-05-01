@@ -17,7 +17,23 @@ public class Lexical_Analyzer {
     private static final String COMMENT_PATTERN = "//.*|/\\*.*?\\*/";
     private static final String WHITESPACE_PATTERN = "\\s+";
 
+    private static final Map<String, String> OPERATOR_TYPES = new HashMap<>();
+    private static final Map<String, String> SYMBOL_TYPES = new HashMap<>();
     private static HashMap<Integer, String> symbolTable;
+
+    static {
+        OPERATOR_TYPES.put("+", "ADD_OP");OPERATOR_TYPES.put("-", "SUB_OP");OPERATOR_TYPES.put("*", "MUL_OP");OPERATOR_TYPES.put("/", "DIV_OP");
+        OPERATOR_TYPES.put("%", "MOD_OP");OPERATOR_TYPES.put("<", "LESS_THAN");OPERATOR_TYPES.put(">", "GREATER_THAN");OPERATOR_TYPES.put("=", "ASSIGN_OP");
+        OPERATOR_TYPES.put("!", "NOT_OP");OPERATOR_TYPES.put("&", "BITWISE_AND");OPERATOR_TYPES.put("|", "BITWISE_OR");OPERATOR_TYPES.put("~", "BITWISE_NOT");
+        OPERATOR_TYPES.put("^", "BITWISE_XOR");OPERATOR_TYPES.put("==", "EQUALS");OPERATOR_TYPES.put("!=", "NOT_EQUALS");OPERATOR_TYPES.put("<=", "LESS_THAN_OR_EQUALS");
+        OPERATOR_TYPES.put(">=", "GREATER_THAN_OR_EQUALS");OPERATOR_TYPES.put("&&", "LOGICAL_AND");OPERATOR_TYPES.put("||", "LOGICAL_OR");OPERATOR_TYPES.put("++", "INCREMENT");
+        OPERATOR_TYPES.put("--", "DECREMENT");OPERATOR_TYPES.put("*=", "MULTIPLY_ASSIGN");OPERATOR_TYPES.put("+=", "ADD_ASSIGN");OPERATOR_TYPES.put("-=", "SUBTRACT_ASSIGN");
+        OPERATOR_TYPES.put("/=", "DIVIDE_ASSIGN");OPERATOR_TYPES.put("%=", "MOD_ASSIGN");
+
+        SYMBOL_TYPES.put("(", "LEFT_PAREN");SYMBOL_TYPES.put(")", "RIGHT_PAREN");SYMBOL_TYPES.put("{", "LEFT_BRACE");
+        SYMBOL_TYPES.put("}", "RIGHT_BRACE");SYMBOL_TYPES.put("[", "LEFT_BRACKET");SYMBOL_TYPES.put("]", "RIGHT_BRACKET");
+        SYMBOL_TYPES.put(";", "SEMICOLON");SYMBOL_TYPES.put(",", "COMMA");SYMBOL_TYPES.put(".", "DOT");
+    }
 
     public static void main(String[] args){
         String sourceCodeFile = "test.c";
@@ -86,9 +102,9 @@ public class Lexical_Analyzer {
             }else if (tokenValue.matches(NUMBER_PATTERN)) {
                  tokenType = "NUMBER";
             } else if (tokenValue.matches(OPERATOR_PATTERN)) {
-                 tokenType = "OPERATOR";
+                 tokenType = OPERATOR_TYPES.get(tokenValue);
             } else if (tokenValue.matches(PUNCTUATION_PATTERN)) {
-                 tokenType = "SYMBOL";
+                 tokenType = SYMBOL_TYPES.get(tokenValue);
             } else if (tokenValue.matches(STRING_PATTERN)) {
                 tokenType = "STRING";
             } else if (tokenValue.matches(CHAR_PATTERN)) {
