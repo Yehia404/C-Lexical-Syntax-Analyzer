@@ -19,7 +19,9 @@ public class Lexical_Analyzer {
 
     private static final Map<String, String> OPERATOR_TYPES = new HashMap<>();
     private static final Map<String, String> SYMBOL_TYPES = new HashMap<>();
-    private static HashMap<Integer, String> symbolTable;
+
+    private static HashMap<Integer, String> symbolTable = new HashMap<>();
+    private static List <Token> Tokens = new ArrayList<>();
 
     static {
         OPERATOR_TYPES.put("+", "ADD_OP");OPERATOR_TYPES.put("-", "SUB_OP");OPERATOR_TYPES.put("*", "MUL_OP");OPERATOR_TYPES.put("/", "DIV_OP");
@@ -35,12 +37,11 @@ public class Lexical_Analyzer {
         SYMBOL_TYPES.put(";", "SEMICOLON");SYMBOL_TYPES.put(",", "COMMA");SYMBOL_TYPES.put(".", "DOT");
     }
 
-    public static void main(String[] args){
-        String sourceCodeFile = "test.c";
-        symbolTable = new HashMap<>();
-        List <Token> tokens = tokenizeSourceCode(sourceCodeFile);
+
+    public void lexicalAnalyze(String sourceCodeFile){
+        Tokens = tokenizeSourceCode(sourceCodeFile);
         System.out.println("<------------------------------Tokens------------------------------>");
-        for (Token token : tokens) {
+        for (Token token : Tokens) {
             System.out.println(token);
         }
         System.out.println("<----------SYMBOL TABLE---------->");
