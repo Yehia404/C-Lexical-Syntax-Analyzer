@@ -1,6 +1,6 @@
 public class Compiler {
     private Lexical_Analyzer scanner = new Lexical_Analyzer();
-
+    private Syntax_Analyzer parser;
     public Compiler(){
     }
 
@@ -13,5 +13,7 @@ public class Compiler {
 
     public void Compile(String sourceCodeFile){
         scanner.lexicalAnalyze(sourceCodeFile);
+        parser = new Syntax_Analyzer(scanner.getTokens());
+        parser.parse();
     }
 }

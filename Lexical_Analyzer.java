@@ -20,8 +20,8 @@ public class Lexical_Analyzer {
     private static final Map<String, String> OPERATOR_TYPES = new HashMap<>();
     private static final Map<String, String> SYMBOL_TYPES = new HashMap<>();
 
-    private static HashMap<Integer, String> symbolTable = new HashMap<>();
-    private static List <Token> Tokens = new ArrayList<>();
+    private  HashMap<Integer, String> symbolTable = new HashMap<>();
+    private  List <Token> Tokens = new ArrayList<>();
 
     static {
         OPERATOR_TYPES.put("+", "ADD_OP");OPERATOR_TYPES.put("-", "SUB_OP");OPERATOR_TYPES.put("*", "MUL_OP");OPERATOR_TYPES.put("/", "DIV_OP");
@@ -51,7 +51,7 @@ public class Lexical_Analyzer {
         }
     }
 
-    private static List<Token> tokenizeSourceCode(String sourceCodeFile){
+    private List<Token> tokenizeSourceCode(String sourceCodeFile){
         List<Token> tokens = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(sourceCodeFile))){
             String Line;
@@ -60,6 +60,7 @@ public class Lexical_Analyzer {
                 tokens.addAll(tokenizeLine(Line,lineNumber));
                 lineNumber++;
             }
+            tokens.add(new Token("EOF", lineNumber, "EOF"));
         }
         catch (IOException e){
             System.out.println("File cannot be read");
@@ -67,7 +68,7 @@ public class Lexical_Analyzer {
     return tokens;
     }
 
-    private static List<Token> tokenizeLine(String line,int lineNumber){
+    private List<Token> tokenizeLine(String line,int lineNumber){
         List<Token> tokens = new ArrayList<>();
 
         Pattern commentPattern = Pattern.compile(COMMENT_PATTERN);
@@ -134,4 +135,11 @@ public class Lexical_Analyzer {
         return tokens;
     }
 
+    public HashMap<Integer, String> getSymbolTable() {
+        return symbolTable;
+    }
+
+    public List<Token> getTokens() {
+        return Tokens;
+    }
 }
