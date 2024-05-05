@@ -78,7 +78,7 @@ public class Lexical_Analyzer {
         }
 
         Pattern pattern = Pattern.compile(
-                        PRE_PROCESSOR_PATTERN + "|"+
+                  PRE_PROCESSOR_PATTERN + "|"+
                         KEYWORD_PATTERN + "|" +
                         IDENTIFIER_PATTERN + "|" +
                         NUMBER_PATTERN + "|" +
