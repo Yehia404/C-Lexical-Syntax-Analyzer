@@ -9,11 +9,12 @@ public class Lexical_Analyzer {
     private static final String PRE_PROCESSOR_PATTERN = "#\\s*\\w+";
     private static final String KEYWORD_PATTERN = "\\b(auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|int|long|register|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while)\\b";
     private static final String IDENTIFIER_PATTERN = "[a-zA-Z_]\\w*";
-    private static final String NUMBER_PATTERN = "[-+]?0[bB][01]+|0[xX][0-9a-fA-F]+|0[0-7]*|[1-9]\\d*\\.?\\d*([eE][-+]?\\d+)?|\\.\\d+([eE][-+]?\\d+)?";
+    private static final String NUMBER_PATTERN = "[-+]?0[bB][01]+|0[xX][0-9a-fA-F]+|0[0-7]*|[1-9]\\d*";
+    private static final String FLOAT_PATTERN = "[-+]?\\d*\\.\\d+([eE][-+]?\\d+)?";;
     private static final String OPERATOR_PATTERN = "[-+*/%<>=!&|~^]+";
     private static final String PUNCTUATION_PATTERN = "[(){}\\[\\];,\\.]";
     private static final String STRING_PATTERN = "\"([^\"]*)\"";
-    private static final String CHAR_PATTERN = "'.'";
+    private static final String CHAR_PATTERN = "'.*'";
     private static final String COMMENT_PATTERN = "//.*|/\\*.*?\\*/";
     private static final String WHITESPACE_PATTERN = "\\s+";
 
@@ -83,6 +84,7 @@ public class Lexical_Analyzer {
                   PRE_PROCESSOR_PATTERN + "|"+
                         KEYWORD_PATTERN + "|" +
                         IDENTIFIER_PATTERN + "|" +
+                        FLOAT_PATTERN  + "|" +
                         NUMBER_PATTERN + "|" +
                         OPERATOR_PATTERN + "|" +
                         PUNCTUATION_PATTERN + "|" +
@@ -101,6 +103,8 @@ public class Lexical_Analyzer {
                 tokenType = "KEYWORD";
             } else if (tokenValue.matches(IDENTIFIER_PATTERN)) {
                  tokenType = "IDENTIFIER";
+            }else if (tokenValue.matches(FLOAT_PATTERN)) {
+                tokenType = "FLOAT_NUMBER";
             }else if (tokenValue.matches(NUMBER_PATTERN)) {
                  tokenType = "NUMBER";
             } else if (tokenValue.matches(OPERATOR_PATTERN)) {

@@ -3,7 +3,7 @@
 /*Hussein ahmed*/
 
 int main() {
-    int a = 10;
+    int a = 1;
     int b = 0b01110;
     char c = 'b'
     int sum = a + b;

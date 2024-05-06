@@ -7,13 +7,13 @@ public class Compiler {
 
     public static void main(String [] args){
         Compiler compiler = new Compiler();
-        compiler.Compile("test.c");
+        compiler.Compile("test3.c");
     }
 
 
     public void Compile(String sourceCodeFile){
         scanner.lexicalAnalyze(sourceCodeFile);
-        parser = new Syntax_Analyzer(scanner.getTokens());
+        parser = new Syntax_Analyzer(scanner.getTokens(),scanner.getSymbolTable());
         parser.parse();
     }
 }
