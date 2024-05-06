@@ -25,9 +25,10 @@ public class Syntax_Analyzer {
         if (currentToken.getValue().equals("if")) {
             parseIfStatement();
         }
-//        else {
-//            // Parse other types of statements
-//        }
+        else if(currentToken.getValue().equals("switch")){
+            // Parse other types of statements
+            ParseSwitchCaseDeclaration();
+        }
     }
 
     private void parseIfStatement() {
@@ -102,7 +103,7 @@ public class Syntax_Analyzer {
         // Parse block of statements
         match("{");
 
-        while (!currentToken.getValue().equals("}")) {
+        while (!currentToken.getValue().equals("}") && !currentToken.getValue().equals("EOF")) {
             if (currentToken.getValue().equals("if")) {
                 parseIfStatement(); // Parse nested if statement
             } else {
@@ -112,9 +113,99 @@ public class Syntax_Analyzer {
         match("}");
 
     }
+    private boolean ParseSwitchCaseDeclaration() {
+        // Reset token index to the beginning
+//        currentTokenIndex = 0;
+//        currentToken = tokens.get(currentTokenIndex);
+
+        // Look for the 'switch' keyword
+        while (currentTokenIndex < tokens.size()) {
+            if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("switch")) {
+                // Match the 'switch' keyword
+                match("switch");
+
+                // Match the opening parenthesis after 'switch'
+                matchType("OPEN_PARENTHESIS");
+
+                // Now, expect an expression after '('
+                matchType("IDENTIFIER"); // Assuming IDENTIFIER represents the expression
+
+                // Match the closing parenthesis after the expression
+                matchType("CLOSE_PARENTHESIS");
+
+                // Match the opening curly brace after the expression
+                matchType("OPEN_BRACE");
+
+                // Detect the switch-case statements inside the switch block
+                boolean switchCaseDetected = detectSwitchCaseInsideBlock();
+
+                // Match the closing curly brace after the switch block
+                matchType("CLOSE_BRACE");
+
+                // Return true if switch-case statements were detected inside the block
+                return switchCaseDetected;
+            } else {
+                // Advance to the next token
+                advance();
+            }
+        }
+
+        // Return false if no switch-case declaration is found
+        return false;
+    }
+
+    private boolean detectSwitchCaseInsideBlock() {
+        // Track whether any switch-case statements were detected
+        boolean switchCaseDetected = false;
+
+        // Iterate through the tokens inside the switch block
+        while (currentTokenIndex < tokens.size()) {
+            if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("case")) {
+                // Match the 'case' keyword
+                matchType("KEYWORD");
+
+                // Now, expect a constant after 'case'
+                matchType("CONSTANT");
+
+                // Match the colon after the constant
+                matchType("COLON");
+
+                // Set switchCaseDetected to true since we found at least one case
+                switchCaseDetected = true;
+            } else if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("default")) {
+                // Match the 'default' keyword
+                matchType("KEYWORD");
+
+                // Match the colon after 'default'
+                matchType("COLON");
+
+                // Set switchCaseDetected to true since we found the default case
+                switchCaseDetected = true;
+            } else if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("break")) {
+                // Match the 'break' keyword
+                matchType("KEYWORD");
+
+                // Match the semicolon after 'break'
+                matchType("SEMICOLON");
+            } else {
+                // Advance to the next token
+                advance();
+            }
+        }
+
+        // Return whether switch-case statements were detected inside the block
+        return switchCaseDetected;
+    }
 
     private void match(String expectedValue) {
         if (currentToken.getValue().equals(expectedValue)) {
+            advance();
+        } else {
+            throw new RuntimeException("Expected '" + expectedValue + "' at index " + currentTokenIndex);
+        }
+    }
+    private void matchType(String expectedValue) {
+        if (currentToken.getType().equals(expectedValue)) {
             advance();
         } else {
             throw new RuntimeException("Expected '" + expectedValue + "' at index " + currentTokenIndex);
