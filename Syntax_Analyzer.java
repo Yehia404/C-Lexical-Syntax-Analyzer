@@ -17,8 +17,9 @@ public class Syntax_Analyzer {
     }
 
     public void parse() {
-        declaration();
+ //       declaration();
 //        operation();
+        function();
 
         if (currentToken.getType().equals("EOF")) {
             System.out.println("Parsing successful!");
@@ -150,4 +151,42 @@ public class Syntax_Analyzer {
 
         }
     }
+
+    private void function()
+    {
+        String returnType = type();
+        String functionName = identifier();
+        match("LEFT_PAREN");
+        parseParameters();
+        match("RIGHT_PAREN");
+        match("{");
+        parseFunctionBody();
+        match("}");
+
+    }
+
+    private void parseParameters() {
+        if (currentToken.getType().equals("RIGHT_PAREN")) {
+            return;
+        }
+        String paramType = type();
+        if (paramType == null) {
+            System.out.println("Expected a type for parameter, but got: " + currentToken.getType());
+            return;
+        }
+        String paramName = identifier();
+        if (paramName == null) {
+            System.out.println("Expected a parameter name, but got: " + currentToken.getType());
+            return;
+        }
+        if (currentToken.getType().equals("COMMA")) {
+            match("COMMA");
+            if (currentToken.getType().equals("RIGHT_PAREN")) {
+                System.out.println("Syntax error: Trailing comma in parameter list");
+                return;
+            }
+            parseParameters();
+        }
+    }
 }
+

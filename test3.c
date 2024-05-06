@@ -1,1 +1,1 @@
-int a = 1010101;
+int func (int var,double he , )
