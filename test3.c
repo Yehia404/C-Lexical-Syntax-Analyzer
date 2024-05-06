@@ -1,1 +1,3 @@
-int a = 1010101;
+for (i = 0; i < 10; i++) {
+printf("For loop iteration: %d\n", i);
+}

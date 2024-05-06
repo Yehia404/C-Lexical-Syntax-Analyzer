@@ -66,7 +66,13 @@ public class Syntax_Analyzer {
                 currentToken.getType().equals("float") ||
                 currentToken.getType().equals("char")) {
             arithmeticOperation();
-        } else {
+        } else if (currentToken.getType().equals("for")) {
+            forLoop();
+        } else if (currentToken.getType().equals("WHILE")) {
+            whileLoop();
+        } else if (currentToken.getType().equals("DO")) {
+            doWhileLoop();
+        }  else {
             // Handle error: unexpected token
         }
     }
@@ -134,7 +140,7 @@ public class Syntax_Analyzer {
     }
 
     private void match(String expectedType) {
-        if (currentToken.getType().equals(expectedType)) {
+        if (currentToken.getValue().equals(expectedType)) {
             advance();
         }
     }
@@ -149,5 +155,89 @@ public class Syntax_Analyzer {
             currentToken = tokens.get(currentTokenIndex);
 
         }
+    }
+
+    private void forLoop() {
+        match("for");
+        match("(");
+        if (currentToken.getType().equals("IDENTIFIER")) {
+            assignment();
+        }
+        match("SEMICOLON");
+        if (!currentToken.getType().equals("SEMICOLON")) {
+            expression();
+        }
+        match("SEMICOLON");
+        if (!currentToken.getType().equals(")")) {
+            assignment();
+        }
+        match(")");
+        match("{");
+
+        // Parse loop body statements
+        while (!currentToken.getType().equals("}")) {
+            operation();
+        }
+
+        match("}");
+    }
+
+    private void whileLoop() {
+        match("WHILE");
+        match("(");
+        expression();
+        match(")");
+        match("{");
+
+        // Parse loop body statements
+        while (!currentToken.getType().equals("}")) {
+            operation();
+        }
+
+        match("}");
+    }
+
+    private void doWhileLoop() {
+        match("DO");
+        match("{");
+
+        // Parse loop body statements
+        while (!currentToken.getType().equals("}")) {
+            operation();
+        }
+
+        match("}");
+        match("WHILE");
+        match("(");
+        expression();
+        match(")");
+        match(";");
+    }
+
+//    private void forEachLoop() {
+//        match("FOREACH");
+//        match("(");
+//        String identifier = identifier();
+//        match(":");
+//        String collection = identifier();
+//        match(")");
+//        match("{");
+//
+//        // Parse loop body statements
+//        while (!currentToken.getType().equals("}")) {
+//            operation();
+//        }
+//
+//        match("}");
+//    }
+
+    private void continueStatement() {
+        match("CONTINUE");
+        match(";");
+    }
+
+    private void breakStatement() {
+        match("BREAK");
+        match(";");
     }
 }
