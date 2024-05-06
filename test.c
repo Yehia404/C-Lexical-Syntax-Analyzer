@@ -1,12 +1,10 @@
-#include <stdio.h>
-//Yehia
-/*Hussein ahmed*/
 
-int main() {
-    int a = 10;
-    int b = 0b01110;
-    char c = 'b'
-    int sum = a + b;
-    printf("The sum is: %d", sum);
-    return 0;
+
+if((x+y) >= (z-f) && (x >= y)){
+    if(hoss == yehia){
+    }
+}
+else if(x >= z) {
+}
+else{
 }
