@@ -37,39 +37,21 @@ public class Syntax_Analyzer {
         String identifier = identifier();
         symbolType.put(identifier,tokenType);
         if (currentToken.getType().equals("SEMICOLON")) {
-            match("SEMICOLON");
+            matchByType("SEMICOLON");
         } else if (currentToken.getType().equals("ASSIGN_OP")) {
-            match("ASSIGN_OP");
+            matchByType("ASSIGN_OP");
 
-            // Check the authorized token type based on the declared type
-            if (tokenType.equalsIgnoreCase("int")) {
-                match("NUMBER");
-            } else if (tokenType.equalsIgnoreCase("float")) {
-                match("FLOAT_NUMBER");
-            } else if (tokenType.equalsIgnoreCase("char")) {
-                match("CHAR");
-            } else if (tokenType.equalsIgnoreCase("double")) {
-                match("FLOAT_NUMBER");
-            } else if (tokenType.equalsIgnoreCase("long")) {
-                match("NUMBER");
-            } else if (tokenType.equalsIgnoreCase("short")) {
-                match("NUMBER");
+            if (tokenType.equalsIgnoreCase("char")) {
+                matchByType("CHAR");
             }
-            match("SEMICOLON");
+            else{
+                parseExpression(tokenType);
+            }
+            matchByType("SEMICOLON");
         }
     }
 
-    private void operation() {
-        if (currentToken.getType().equals("IDENTIFIER")) {
-            assignment();
-        } else if (currentToken.getType().equals("integer") ||
-                currentToken.getType().equals("float") ||
-                currentToken.getType().equals("char")) {
-            arithmeticOperation();
-        } else {
-            // Handle error: unexpected token
-        }
-    }
+
 
     private String type() {
         String tokenType = currentToken.getValue();
@@ -94,60 +76,100 @@ public class Syntax_Analyzer {
         }
         return null;
     }
-
-    private void assignment() {
-        identifier();
-        match("=");
-        expression();
-        match(";");
-    }
-
-    private void arithmeticOperation() {
-        expression();
-    }
-
-    private void expression() {
-        term();
-        while (currentToken.getType().equals("+") || currentToken.getType().equals("-")) {
-            match(currentToken.getType());
-            term();
+    private void parseExpression(String tokentype) {
+        parseTerm(tokentype);
+        while (currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
+                currentToken.getType().equals("DIV_OP") || currentToken.getType().equals("SUB_OP") ) {
+            String operator = currentToken.getValue();
+            matchByValue(operator);
+            parseTerm(tokentype);
         }
     }
 
-    private void term() {
-        factor();
-        while (currentToken.getType().equals("*") || currentToken.getType().equals("/")) {
-            match(currentToken.getType());
-            factor();
+    private void parseTerm(String tokentype) {
+        parseFactor(tokentype);
+        while ((currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
+                currentToken.getType().equals("DIV_OP") || currentToken.getType().equals("SUB_OP") ) && !(currentToken.getType().equals("SEMICOLON"))) {
+            String operator = currentToken.getValue();
+            if (operator.equals("+")) {
+                matchByType("ADD_OP");
+                parseFactor(tokentype);
+            }
+            else if (operator.equals("-")) {
+                matchByType("SUB_OP");
+                parseFactor(tokentype);
+            }
+            else if (operator.equals("*")) {
+                matchByType("MUL_OP");
+                parseFactor(tokentype);
+            }
+            else if (operator.equals("/")) {
+                matchByType("DIV_OP");
+                parseFactor(tokentype);
+            }
+            else if (operator.equals("%")) {
+                matchByType("MOD_OP");
+                parseFactor(tokentype);
+            }
+            else {
+                break;
+            }
         }
     }
 
-    private void factor() {
-        if (currentToken.getType().equals("identifier") || currentToken.getType().equals("integer") ||
-                currentToken.getType().equals("float") || currentToken.getType().equals("char")) {
-            advance();
-        } else if (currentToken.getType().equals("(")) {
-            match("(");
-            expression();
-            match(")");
+    private void parseFactor(String tokentype) {
+        if (currentToken.getType().equals("LEFT_PAREN")) {
+            matchByType("LEFT_PAREN");
+            parseExpression(tokentype);
+            matchByType("RIGHT_PAREN");
+        } else {
+            parseNumber(tokentype);
         }
     }
 
-    private void match(String expectedType) {
+
+    private void parseNumber(String tokentype) {
+        if(currentToken.getType().equals("IDENTIFIER")) {
+            String tokenType = symbolType.get(currentToken.getValue());
+            if (tokenType.equalsIgnoreCase("int")) {
+                advance();
+            } else if (tokenType.equalsIgnoreCase("float") || tokenType.equalsIgnoreCase("double")) {
+                advance();
+            } else if (tokenType.equalsIgnoreCase("long") || tokenType.equalsIgnoreCase("short")) {
+                advance();
+            }
+        }
+        else{
+            if (tokentype.equalsIgnoreCase("int") || tokentype.equalsIgnoreCase("long") || tokentype.equalsIgnoreCase("short")) {
+                matchByType("NUMBER");
+            } else if (tokentype.equalsIgnoreCase("float") || tokentype.equalsIgnoreCase("double")) {
+                matchByType("FLOAT_NUMBER");
+            }
+        }
+    }
+
+
+    private void matchByType(String expectedType) {
         if (currentToken.getType().equals(expectedType)) {
             advance();
         }
     }
+    private void matchByValue(String value) {
+        if (currentToken.getValue().equals(value)) {
+            advance();
+        }
+    }
+
 
     private void advance() {
         currentTokenIndex++;
-        currentToken = tokens.get(currentTokenIndex);
-        if (currentToken.getType().equalsIgnoreCase("WHITESPACE"))
-            currentTokenIndex++;
 
         if (currentTokenIndex < tokens.size()) {
             currentToken = tokens.get(currentTokenIndex);
-
+            if (currentToken.getType().equalsIgnoreCase("WHITESPACE")) {
+                currentTokenIndex++;
+                currentToken = tokens.get(currentTokenIndex);
+            }
         }
     }
 }
