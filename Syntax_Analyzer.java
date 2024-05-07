@@ -5,7 +5,7 @@ public class Syntax_Analyzer {
     private List<Token> tokens;
     private int currentTokenIndex;
     private Token currentToken;
-    private HashMap<String , String > varTypes;
+    private HashMap<String , String > symbolType;
     public Syntax_Analyzer(List <Token> tokens){
         this.tokens = tokens;
         currentTokenIndex = 0;
@@ -30,11 +30,80 @@ public class Syntax_Analyzer {
             // Parse other types of statements
             ParseSwitchCaseDeclaration();
         }
+        else if(currentToken.getValue().equals("for")) {
+            parseForLoop();
+        }
+    }
+
+    private void parseForLoop() {
+        match("for");
+        match("(");
+        parseInitialization();
+        match(";");
+        parseCondition();
+        match(";");
+        parseUpdate();
+        match(")");
+        match("{");
+        parseStatement();
+        match("}");
+    }
+
+    private void parseUpdate() {
+        // Parse update part of the for loop
+        if (currentToken.getType().equals("IDENTIFIER")) {
+            match(currentToken.getValue());
+            if(currentToken.getValue().equals("++") || currentToken.getValue().equals("--")){
+                match(currentToken.getValue());
+            } else if (currentToken.getValue().equals("+=") || currentToken.getValue().equals("-=")
+                    || currentToken.getValue().equals("*=") || currentToken.getValue().equals("/=")) {
+                parseSignIncrement();
+            }
+        } else if (currentToken.getValue().equals("++") || currentToken.getValue().equals("--")) {
+            parseIncrementDecrement();
+        } else {
+            throw new RuntimeException("Expected a valid update expression at index " + currentTokenIndex);
+        }
+    }
+
+    private void parseSignIncrement() {
+        match(currentToken.getValue());
+        matchType("NUMBER");
+    }
+
+    private void parseIncrementDecrement() {
+        // Parse increment or decrement
+        match(currentToken.getValue());
+        matchType("IDENTIFIER"); // Match variable name
+    }
+
+    private void parseInitialization() {
+        // Parse initialization part of the for loop
+        if (currentToken.getValue().equals("int")) {
+            //parseDeclaration();
+        } else if(currentToken.getType().equals("IDENTIFIER")) {
+            // yehia hyzwdha w zawed li nfsak fyha sa3etha eno y tchedk eno numeric literal
+            String type = symbolType.get(currentToken.getValue());
+            if(type.isEmpty()){
+                throw new RuntimeException("variable is not initialized");
+            }
+            else if(type.equals("int")) {
+                //parseExpression();
+            }
+            else{
+                throw new RuntimeException("Expected int type at index " + currentTokenIndex);
+            }
+        }
+        else{
+            throw new RuntimeException("Expected int type at index " + currentTokenIndex);
+        }
     }
 
     private void parseIfStatement() {
         match("if");
+        match("(");
         parseCondition();
+        match(")");
         parseBlock();
         if (currentToken.getValue().equals("else")) {
             match("else");
@@ -49,7 +118,6 @@ public class Syntax_Analyzer {
     }
 
     private void parseCondition() {
-        match("(");
         parseExpression();
         if (currentToken.getType().equals("GREATER_THAN_OR_EQUALS") ||
                 currentToken.getType().equals("EQUALS") || currentToken.getType().equals("NOT_EQUALS") ||
@@ -59,7 +127,6 @@ public class Syntax_Analyzer {
             throw new RuntimeException("Expected relational operator at index " + currentTokenIndex);
         }
         parseExpression();
-        match(")");
     }
 
     private void parseExpression() {
@@ -122,7 +189,7 @@ public class Syntax_Analyzer {
                 match("(");
 
                 // Now, expect an expression after '('
-                String varType = varTypes.get(currentToken.getValue());
+                String varType = symbolType.get(currentToken.getValue());
                 matchType("IDENTIFIER"); // Assuming IDENTIFIER represents the expression
 
                 // Match the closing parenthesis after the expression
@@ -147,7 +214,7 @@ public class Syntax_Analyzer {
             if (type.equals("int")) {
                 matchType("NUMBER");
             } else if (type.equals("float")) {
-                matchType("NUMBER");
+                matchType("FLOAT_NUMBER");
             } else if (type.equals("char")) {
                 matchType("CHAR");
             } else if (type.equals("string")) {

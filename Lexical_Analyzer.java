@@ -9,11 +9,12 @@ public class Lexical_Analyzer {
     private static final String PRE_PROCESSOR_PATTERN = "#\\s*\\w+";
     private static final String KEYWORD_PATTERN = "\\b(auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|int|long|register|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while)\\b";
     private static final String IDENTIFIER_PATTERN = "[a-zA-Z_]\\w*";
-    private static final String NUMBER_PATTERN = "[-+]?0[bB][01]+|0[xX][0-9a-fA-F]+|0[0-7]*|[1-9]\\d*\\.?\\d*([eE][-+]?\\d+)?|\\.\\d+([eE][-+]?\\d+)?";
+    private static final String NUMBER_PATTERN = "0[bB][01]+|0[xX][0-9a-fA-F]+|0[0-7]*|[-+]?[1-9]\\d*";
+    private static final String FLOAT_PATTERN = "[-+]?\\d*\\.\\d+([eE][-+]?\\d+)?";
     private static final String OPERATOR_PATTERN = "[-+*/%<>=!&|~^]+";
     private static final String PUNCTUATION_PATTERN = "[(){}\\[\\];,\\.:]";
     private static final String STRING_PATTERN = "\"([^\"]*)\"";
-    private static final String CHAR_PATTERN = "'.'";
+    private static final String CHAR_PATTERN = "'.*'";
     private static final String COMMENT_PATTERN = "//.*|/\\*.*?\\*/";
     private static final String WHITESPACE_PATTERN = "\\s+";
 
@@ -22,7 +23,7 @@ public class Lexical_Analyzer {
 
     private  HashMap<Integer, String> symbolTable = new HashMap<>();
     private  List <Token> Tokens = new ArrayList<>();
-    private Hashtable<String, String> variableTypes = new Hashtable<>();
+
     static {
         OPERATOR_TYPES.put("+", "ADD_OP");OPERATOR_TYPES.put("-", "SUB_OP");OPERATOR_TYPES.put("*", "MUL_OP");OPERATOR_TYPES.put("/", "DIV_OP");
         OPERATOR_TYPES.put("%", "MOD_OP");OPERATOR_TYPES.put("<", "LESS_THAN");OPERATOR_TYPES.put(">", "GREATER_THAN");OPERATOR_TYPES.put("=", "ASSIGN_OP");
@@ -65,7 +66,7 @@ public class Lexical_Analyzer {
         catch (IOException e){
             System.out.println("File cannot be read");
         }
-    return tokens;
+        return tokens;
     }
 
     private List<Token> tokenizeLine(String line,int lineNumber){
@@ -80,9 +81,10 @@ public class Lexical_Analyzer {
         }
 
         Pattern pattern = Pattern.compile(
-                  PRE_PROCESSOR_PATTERN + "|"+
+                PRE_PROCESSOR_PATTERN + "|"+
                         KEYWORD_PATTERN + "|" +
                         IDENTIFIER_PATTERN + "|" +
+                        FLOAT_PATTERN  + "|" +
                         NUMBER_PATTERN + "|" +
                         OPERATOR_PATTERN + "|" +
                         PUNCTUATION_PATTERN + "|" +
@@ -100,17 +102,19 @@ public class Lexical_Analyzer {
             } else if (tokenValue.matches(KEYWORD_PATTERN)) {
                 tokenType = "KEYWORD";
             } else if (tokenValue.matches(IDENTIFIER_PATTERN)) {
-                 tokenType = "IDENTIFIER";
+                tokenType = "IDENTIFIER";
+            }else if (tokenValue.matches(FLOAT_PATTERN)) {
+                tokenType = "FLOAT_NUMBER";
             }else if (tokenValue.matches(NUMBER_PATTERN)) {
-                 tokenType = "NUMBER";
+                tokenType = "NUMBER";
             } else if (tokenValue.matches(OPERATOR_PATTERN)) {
-                 tokenType = OPERATOR_TYPES.get(tokenValue);
+                tokenType = OPERATOR_TYPES.get(tokenValue);
             } else if (tokenValue.matches(PUNCTUATION_PATTERN)) {
-                 tokenType = SYMBOL_TYPES.get(tokenValue);
+                tokenType = SYMBOL_TYPES.get(tokenValue);
             } else if (tokenValue.matches(STRING_PATTERN)) {
                 tokenType = "STRING";
             } else if (tokenValue.matches(CHAR_PATTERN)) {
-                 tokenType = "CHAR";
+                tokenType = "CHAR";
             } else if (tokenValue.matches(WHITESPACE_PATTERN)) {
                 tokenType = "WHITESPACE";
             } else {
@@ -128,7 +132,7 @@ public class Lexical_Analyzer {
                 symbolTable.put(token.getHashIndex(),tokenValue);
             }
             else{
-            tokens.add(new Token(tokenType,lineNumber,tokenValue));
+                tokens.add(new Token(tokenType,lineNumber,tokenValue));
             }
         }
 
