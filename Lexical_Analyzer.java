@@ -11,7 +11,7 @@ public class Lexical_Analyzer {
     private static final String IDENTIFIER_PATTERN = "[a-zA-Z_]\\w*";
     private static final String NUMBER_PATTERN = "[-+]?0[bB][01]+|0[xX][0-9a-fA-F]+|0[0-7]*|[1-9]\\d*\\.?\\d*([eE][-+]?\\d+)?|\\.\\d+([eE][-+]?\\d+)?";
     private static final String OPERATOR_PATTERN = "[-+*/%<>=!&|~^]+";
-    private static final String PUNCTUATION_PATTERN = "[(){}\\[\\];,\\.]";
+    private static final String PUNCTUATION_PATTERN = "[(){}\\[\\];,\\.:]";
     private static final String STRING_PATTERN = "\"([^\"]*)\"";
     private static final String CHAR_PATTERN = "'.'";
     private static final String COMMENT_PATTERN = "//.*|/\\*.*?\\*/";
@@ -34,7 +34,7 @@ public class Lexical_Analyzer {
 
         SYMBOL_TYPES.put("(", "LEFT_PAREN");SYMBOL_TYPES.put(")", "RIGHT_PAREN");SYMBOL_TYPES.put("{", "LEFT_BRACE");
         SYMBOL_TYPES.put("}", "RIGHT_BRACE");SYMBOL_TYPES.put("[", "LEFT_BRACKET");SYMBOL_TYPES.put("]", "RIGHT_BRACKET");
-        SYMBOL_TYPES.put(";", "SEMICOLON");SYMBOL_TYPES.put(",", "COMMA");SYMBOL_TYPES.put(".", "DOT");
+        SYMBOL_TYPES.put(";", "SEMICOLON");SYMBOL_TYPES.put(",", "COMMA");SYMBOL_TYPES.put(".", "DOT");SYMBOL_TYPES.put(":", "COLON");
     }
 
 

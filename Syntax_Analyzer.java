@@ -113,89 +113,55 @@ public class Syntax_Analyzer {
         match("}");
 
     }
-    private boolean ParseSwitchCaseDeclaration() {
-        // Reset token index to the beginning
-//        currentTokenIndex = 0;
-//        currentToken = tokens.get(currentTokenIndex);
-
-        // Look for the 'switch' keyword
-        while (currentTokenIndex < tokens.size()) {
-            if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("switch")) {
+    private void ParseSwitchCaseDeclaration() {
                 // Match the 'switch' keyword
                 match("switch");
 
                 // Match the opening parenthesis after 'switch'
-                matchType("OPEN_PARENTHESIS");
+                match("(");
 
                 // Now, expect an expression after '('
                 matchType("IDENTIFIER"); // Assuming IDENTIFIER represents the expression
 
                 // Match the closing parenthesis after the expression
-                matchType("CLOSE_PARENTHESIS");
+                match(")");
 
                 // Match the opening curly brace after the expression
-                matchType("OPEN_BRACE");
+                match("{");
 
                 // Detect the switch-case statements inside the switch block
-                boolean switchCaseDetected = detectSwitchCaseInsideBlock();
+                detectSwitchCaseInsideBlock();
 
                 // Match the closing curly brace after the switch block
-                matchType("CLOSE_BRACE");
-
-                // Return true if switch-case statements were detected inside the block
-                return switchCaseDetected;
-            } else {
-                // Advance to the next token
-                advance();
-            }
+                match("}");
         }
-
-        // Return false if no switch-case declaration is found
-        return false;
-    }
-
-    private boolean detectSwitchCaseInsideBlock() {
-        // Track whether any switch-case statements were detected
-        boolean switchCaseDetected = false;
-
-        // Iterate through the tokens inside the switch block
-        while (currentTokenIndex < tokens.size()) {
-            if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("case")) {
+    private void detectSwitchCaseInsideBlock() {
                 // Match the 'case' keyword
-                matchType("KEYWORD");
+                match("case");
+
 
                 // Now, expect a constant after 'case'
                 matchType("CONSTANT");
 
                 // Match the colon after the constant
                 matchType("COLON");
-
-                // Set switchCaseDetected to true since we found at least one case
-                switchCaseDetected = true;
-            } else if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("default")) {
+                parseStatement();
+            if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("default")) {
                 // Match the 'default' keyword
-                matchType("KEYWORD");
+                match("default");
 
                 // Match the colon after 'default'
                 matchType("COLON");
 
-                // Set switchCaseDetected to true since we found the default case
-                switchCaseDetected = true;
             } else if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("break")) {
                 // Match the 'break' keyword
-                matchType("KEYWORD");
-
+                match( "default");
                 // Match the semicolon after 'break'
                 matchType("SEMICOLON");
-            } else {
-                // Advance to the next token
-                advance();
             }
         }
 
-        // Return whether switch-case statements were detected inside the block
-        return switchCaseDetected;
-    }
+
 
     private void match(String expectedValue) {
         if (currentToken.getValue().equals(expectedValue)) {
