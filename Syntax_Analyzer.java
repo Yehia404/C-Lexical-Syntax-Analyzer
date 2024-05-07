@@ -139,36 +139,36 @@ public class Syntax_Analyzer {
         }
     private void detectSwitchCaseInsideBlock(String type) {
                 // Match the 'case' keyword
-                match("case");
+        while(!(currentToken.getValue().equals("}") || currentToken.getValue().equals("default") || currentToken.getValue().equals("EOF "))) {
+            match("case");
 
 
-                // Now, expect a constant after 'case' if int u need to make it in analyzer
-                if(type.equals("int")) {
-                    matchType("NUMBER");
-                }
-                else if(type.equals("float")){
-                    matchType("NUMBER");
-                }
-                else if(type.equals("char")){
-                    matchType("CHAR");
-                }else if(type.equals("string")){
-                    matchType("STRING");
-                }
-                // Match the colon after the constant
-                matchType("COLON");
-                parseStatement();
+            // Now, expect a constant after 'case' *if int u need to make it in analyzer*
+            if (type.equals("int")) {
+                matchType("NUMBER");
+            } else if (type.equals("float")) {
+                matchType("NUMBER");
+            } else if (type.equals("char")) {
+                matchType("CHAR");
+            } else if (type.equals("string")) {
+                matchType("STRING");
+            }
+            // Match the colon after the constant
+            matchType("COLON");
+            parseStatement();
+            if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("break")) {
+                // Match the 'break' keyword
+                match( "break");
+                // Match the semicolon after 'break'
+                matchType("SEMICOLON");
+            }
+        }
             if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("default")) {
                 // Match the 'default' keyword
                 match("default");
-
                 // Match the colon after 'default'
                 matchType("COLON");
-
-            } else if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("break")) {
-                // Match the 'break' keyword
-                match( "default");
-                // Match the semicolon after 'break'
-                matchType("SEMICOLON");
+                parseStatement();
             }
         }
 
