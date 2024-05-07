@@ -1,1 +1,3 @@
-int arr [1] = {1};
+int func (int a , int b){}
+
+int a = func();
