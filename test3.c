@@ -1,1 +1,1 @@
-int func (int var,double he , )
+#include <studio>

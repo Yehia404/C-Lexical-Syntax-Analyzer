@@ -19,7 +19,8 @@ public class Syntax_Analyzer {
     public void parse() {
  //       declaration();
 //        operation();
-        function();
+        //function();
+        Preprocessor();
 
         if (currentToken.getType().equals("EOF")) {
             System.out.println("Parsing successful!");
@@ -160,7 +161,7 @@ public class Syntax_Analyzer {
         parseParameters();
         match("RIGHT_PAREN");
         match("{");
-        parseFunctionBody();
+        //parseFunctionBody();
         match("}");
 
     }
@@ -187,6 +188,12 @@ public class Syntax_Analyzer {
             }
             parseParameters();
         }
+    }
+    private void Preprocessor(){
+        match("PRE_PROCESSOR_PATTERN");
+        match("LESS_THAN");
+        match("IDENTIFIER");
+        match("GREATER_THAN");
     }
 }
 
