@@ -22,7 +22,7 @@ public class Lexical_Analyzer {
 
     private  HashMap<Integer, String> symbolTable = new HashMap<>();
     private  List <Token> Tokens = new ArrayList<>();
-
+    private Hashtable<String, String> variableTypes = new Hashtable<>();
     static {
         OPERATOR_TYPES.put("+", "ADD_OP");OPERATOR_TYPES.put("-", "SUB_OP");OPERATOR_TYPES.put("*", "MUL_OP");OPERATOR_TYPES.put("/", "DIV_OP");
         OPERATOR_TYPES.put("%", "MOD_OP");OPERATOR_TYPES.put("<", "LESS_THAN");OPERATOR_TYPES.put(">", "GREATER_THAN");OPERATOR_TYPES.put("=", "ASSIGN_OP");

@@ -1,10 +1,11 @@
+import java.util.HashMap;
 import java.util.List;
 
 public class Syntax_Analyzer {
     private List<Token> tokens;
     private int currentTokenIndex;
     private Token currentToken;
-
+    private HashMap<String , String > varTypes;
     public Syntax_Analyzer(List <Token> tokens){
         this.tokens = tokens;
         currentTokenIndex = 0;
@@ -121,6 +122,7 @@ public class Syntax_Analyzer {
                 match("(");
 
                 // Now, expect an expression after '('
+                String varType = varTypes.get(currentToken.getValue());
                 matchType("IDENTIFIER"); // Assuming IDENTIFIER represents the expression
 
                 // Match the closing parenthesis after the expression
@@ -130,19 +132,28 @@ public class Syntax_Analyzer {
                 match("{");
 
                 // Detect the switch-case statements inside the switch block
-                detectSwitchCaseInsideBlock();
+                detectSwitchCaseInsideBlock(varType);
 
                 // Match the closing curly brace after the switch block
                 match("}");
         }
-    private void detectSwitchCaseInsideBlock() {
+    private void detectSwitchCaseInsideBlock(String type) {
                 // Match the 'case' keyword
                 match("case");
 
 
-                // Now, expect a constant after 'case'
-                matchType("CONSTANT");
-
+                // Now, expect a constant after 'case' if int u need to make it in analyzer
+                if(type.equals("int")) {
+                    matchType("NUMBER");
+                }
+                else if(type.equals("float")){
+                    matchType("NUMBER");
+                }
+                else if(type.equals("char")){
+                    matchType("CHAR");
+                }else if(type.equals("string")){
+                    matchType("STRING");
+                }
                 // Match the colon after the constant
                 matchType("COLON");
                 parseStatement();
