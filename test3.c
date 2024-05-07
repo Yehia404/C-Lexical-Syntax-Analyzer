@@ -1,3 +1,5 @@
 int func (int a , int b){}
 
-int a = func();
+int c;
+int b;
+int a = func (c, b);

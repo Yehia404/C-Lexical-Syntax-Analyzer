@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -6,6 +7,7 @@ public class Syntax_Analyzer {
     private List<Token> tokens;
     private HashMap<Integer,String> symbolTable;
     private HashMap<String,String> symbolType = new HashMap<>();
+    private HashMap<String,List<String>> funcParameters = new HashMap<>();
     private int currentTokenIndex;
     private Token currentToken;
 
@@ -17,9 +19,15 @@ public class Syntax_Analyzer {
     }
 
     public void parse() {
-        function();
-        declaration();
-//        operation();
+        while (!currentToken.getType().equals("EOF")) {
+            if (currentToken.getType().equals("EOF")) {
+                break;
+            }
+            String tokenType = currentToken.getType();
+            if (tokenType.equals("KEYWORD")){
+                String dataType = type();
+            }
+        }
 
 
         if (currentToken.getType().equals("EOF")) {
@@ -29,6 +37,12 @@ public class Syntax_Analyzer {
                 String type = symbolType.get(i);
                 System.out.println("Variable:  " + i+"   Type:  " + type);
             }
+            System.out.println("<---------- Function Parameters ---------->");
+            for (String functionName : funcParameters.keySet()) {
+                List<String> parameters = funcParameters.get(functionName);
+                System.out.println("Function: " + functionName + "  Parameters: " + parameters + "  No of Parameters: " + parameters.size());
+            }
+
         } else {
             System.out.println("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
         }
@@ -47,14 +61,37 @@ public class Syntax_Analyzer {
                 matchByType("CHAR");
             }
             else if (currentToken.getType().equals("IDENTIFIER")){
-                String functionType = symbolType.get(currentToken.getValue());
+                String functionName = currentToken.getValue() ;
+                String functionType = symbolType.get(functionName);
                 if (functionType == null){
                     throw new RuntimeException("Parsing failed. Unexpected token (Function is not defined): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
                 matchByType("IDENTIFIER");
                 if (tokenType.equals(functionType)){
                     matchByType("LEFT_PAREN");
-                    //Parameters
+
+                    while(!(currentToken.getType().equals("RIGHT_PAREN"))) {
+                        List<String> parameters;
+
+                        String paramName = identifier();
+                        if (paramName == null) {
+                            throw new RuntimeException("Parsing failed. Unexpected token (Expected an argument name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                        }
+                        String paramType = symbolType.get(paramName);
+                        parameters = funcParameters.get(functionName);
+                        for (String param : parameters){
+                            if(!(param.equals(paramType)))
+                                throw new RuntimeException("Parsing failed. Unexpected token (Invalid argument Type): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                        }
+                        if (currentToken.getType().equals("COMMA")) {
+                            matchByType("COMMA");
+                            if (currentToken.getType().equals("RIGHT_PAREN")) {
+                                throw new RuntimeException("Parsing failed. Unexpected token (Trailing comma in argument list): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                            }
+
+                        }
+                    }
+
                     matchByType("RIGHT_PAREN");
                 }
                 else {
@@ -227,7 +264,7 @@ public class Syntax_Analyzer {
         String functionName = identifier();
         symbolType.put(functionName,returnType);
         matchByType("LEFT_PAREN");
-        parseParameters();
+        parseParameters(functionName);
         matchByType("RIGHT_PAREN");
         matchByType("LEFT_BRACE");
 //        parseFunctionBody();
@@ -235,25 +272,29 @@ public class Syntax_Analyzer {
 
     }
 
-    private void parseParameters() {
-        if (currentToken.getType().equals("RIGHT_PAREN")) {
-            return;
-        }
-        String paramType = type();
-        if (paramType == null) {
-            throw new RuntimeException("Parsing failed. Unexpected token (Expected a type for parameter): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
-        }
-        String paramName = identifier();
-        if (paramName == null) {
-            throw new RuntimeException("Parsing failed. Unexpected token (Expected a parameter name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
-        }
-        if (currentToken.getType().equals("COMMA")) {
-            matchByType("COMMA");
-            if (currentToken.getType().equals("RIGHT_PAREN")) {
-                throw new RuntimeException("Parsing failed. Unexpected token (Trailing comma in parameter list): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+    private void parseParameters(String functionName) {
+        List<String> paramTypes = new ArrayList<>();
+        while(!(currentToken.getType().equals("RIGHT_PAREN"))) {
+
+            String paramType = type();
+            if (paramType == null) {
+                throw new RuntimeException("Parsing failed. Unexpected token (Expected a type for parameter): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
-            parseParameters();
+            String paramName = identifier();
+            if (paramName == null) {
+                throw new RuntimeException("Parsing failed. Unexpected token (Expected a parameter name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+            }
+            paramTypes.add(paramType);
+            if (currentToken.getType().equals("COMMA")) {
+                matchByType("COMMA");
+                if (currentToken.getType().equals("RIGHT_PAREN")) {
+                    throw new RuntimeException("Parsing failed. Unexpected token (Trailing comma in parameter list): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                }
+
+            }
         }
+        funcParameters.put(functionName,paramTypes);
+
     }
 
     private void matchByType(String expectedType) {
