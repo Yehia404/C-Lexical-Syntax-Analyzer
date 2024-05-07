@@ -47,8 +47,35 @@ public class Syntax_Analyzer {
             else{
                 parseExpression(tokenType);
             }
-            matchByType("SEMICOLON");
+
+        } else if (currentToken.getType().equals("LEFT_BRACKET")) {
+            matchByType("LEFT_BRACKET");
+            int size = Integer.parseInt(currentToken.getValue());
+            if (currentToken.getType().equals("NUMBER")) {
+
+
+                if (size < 0) {
+                    throw new RuntimeException("Parsing failed. Unexpected token (Negative number in array declaration): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                }
+
+                matchByType("NUMBER");
+            }
+            matchByType("RIGHT_BRACKET");
+            if (currentToken.getType().equals("SEMICOLON")){
+                matchByType("SEMICOLON");
+                return;
+            }
+            else if(currentToken.getType().equals("ASSIGN_OP")){
+                matchByType("ASSIGN_OP");
+                matchByType("LEFT_BRACE");
+                matchArrayListContents(tokenType,size);
+                matchByType("RIGHT_BRACE");
+            }
+
+        } else{
+            throw new RuntimeException("Parsing failed. Unexpected token (Missing Semicolon): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
         }
+        matchByType("SEMICOLON");
     }
 
 
@@ -76,6 +103,30 @@ public class Syntax_Analyzer {
         }
         return null;
     }
+
+    private void matchArrayListContents(String tokentype, int size) {
+        int count = 0;
+
+        // Match the initial element
+        parseExpression(tokentype);
+
+        count++;
+
+        // Match the remaining elements
+        while (currentToken.getType().equals("COMMA")) {
+            matchByType("COMMA");
+
+            parseExpression(tokentype);
+
+            count++;
+        }
+
+        // Check if the count matches the expected size
+        if (count != size) {
+            throw new RuntimeException("Parsing failed. Array size does not match the number of elements. Expected size: " + size + ", Actual count: " + count + " Line Number: " + currentToken.getLineNumber());
+        }
+    }
+
     private void parseExpression(String tokentype) {
         parseTerm(tokentype);
         while (currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
@@ -153,10 +204,16 @@ public class Syntax_Analyzer {
         if (currentToken.getType().equals(expectedType)) {
             advance();
         }
+        else{
+            throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+        }
     }
     private void matchByValue(String value) {
         if (currentToken.getValue().equals(value)) {
             advance();
+        }
+        else{
+            throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
         }
     }
 
