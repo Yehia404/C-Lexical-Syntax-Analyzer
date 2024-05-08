@@ -17,7 +17,7 @@ public class Syntax_Analyzer {
         currentTokenIndex = 0;
         currentToken = tokens.get(0);
     }
-
+//    const/static/enum/typedef/struct
     public void parse() {
         while (!currentToken.getType().equals("EOF")) {
             if (currentToken.getType().equals("EOF")) {
@@ -25,7 +25,15 @@ public class Syntax_Analyzer {
             }
             String tokenType = currentToken.getType();
             if (tokenType.equals("KEYWORD")){
-                String dataType = type();
+                String dataType;
+                if (currentToken.getValue().equalsIgnoreCase("void")){
+                     dataType = "void";
+                     matchByType("KEYWORD");
+                }
+                else{
+                     dataType = type();
+                }
+
                 String variable = identifier();
                 symbolType.put(variable,dataType);
                 if (currentToken.getType().equals("LEFT_PAREN")) {

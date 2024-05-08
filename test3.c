@@ -1,4 +1,4 @@
-int func (int a , int b){}
+void func (int a , int b){}
 
 float d;
 int c;
