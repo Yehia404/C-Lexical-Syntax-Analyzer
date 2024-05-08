@@ -38,11 +38,11 @@ public class Syntax_Analyzer {
         }
     }
     private void parseWhileLoop() {
-        match("while");  // Expects the "while" keyword
-        matchType("LEFT_PAREN");  // Expects a left parenthesis token
+        matchByValue("while");  // Expects the "while" keyword
+        matchByType("LEFT_PAREN");  // Expects a left parenthesis token
         parseCondition();                                         // Parses the condition expression
-        matchType("RIGHT_PAREN");  // Expects a right parenthesis token
-        matchType("LEFT_BRACE");  // Expects a left brace token
+        matchByType("RIGHT_PAREN");  // Expects a right parenthesis token
+        matchByType("LEFT_BRACE");  // Expects a left brace token
         while(! currentToken.getValue().equals("}") && !currentToken.getValue().equals("EOF") ) {
             parseStatement();
         }
@@ -51,31 +51,31 @@ public class Syntax_Analyzer {
 //            // Call relevant parsing methods based on the current token
 //            // You may need to handle different statements or declarations within the loop body
 //        }
-        matchType("RIGHT_BRACE");  // Expects a right brace token
+        matchByType("RIGHT_BRACE");  // Expects a right brace token
     }
 
     private void parseForLoop() {
-        match("for");
-        match("(");
+        matchByValue("for");
+        matchByValue("(");
         parseInitialization();
-        match(";");
+        matchByValue(";");
         parseCondition();
-        match(";");
+        matchByValue(";");
         parseUpdate();
-        match(")");
-        match("{");
+        matchByValue(")");
+        matchByValue("{");
         while(! currentToken.getValue().equals("}") && !currentToken.getValue().equals("EOF")) {
             parseStatement();
         }
-        match("}");
+        matchByValue("}");
     }
 
     private void parseUpdate() {
         // Parse update part of the for loop
         if (currentToken.getType().equals("IDENTIFIER")) {
-            match(currentToken.getValue());
+            matchByValue(currentToken.getValue());
             if(currentToken.getValue().equals("++") || currentToken.getValue().equals("--")){
-                match(currentToken.getValue());
+                matchByValue(currentToken.getValue());
             } else if (currentToken.getValue().equals("+=") || currentToken.getValue().equals("-=")
                     || currentToken.getValue().equals("*=") || currentToken.getValue().equals("/=")) {
                 parseSignIncrement();
@@ -88,14 +88,14 @@ public class Syntax_Analyzer {
     }
 
     private void parseSignIncrement() {
-        match(currentToken.getValue());
-        matchType("NUMBER");
+        matchByValue(currentToken.getValue());
+        matchByType("NUMBER");
     }
 
     private void parseIncrementDecrement() {
         // Parse increment or decrement
-        match(currentToken.getValue());
-        matchType("IDENTIFIER"); // Match variable name
+        matchByValue(currentToken.getValue());
+        matchByType("IDENTIFIER"); // Match variable name
     }
 
     private void parseInitialization() {
@@ -121,13 +121,13 @@ public class Syntax_Analyzer {
     }
 
     private void parseIfStatement() {
-        match("if");
-        match("(");
+        matchByValue("if");
+        matchByValue("(");
         parseCondition();
-        match(")");
+        matchByValue(")");
         parseBlock();
         if (currentToken.getValue().equals("else")) {
-            match("else");
+            matchByValue("else");
             if (currentToken.getValue().equals("if")) {
                 // Parse else if
                 parseIfStatement();
@@ -144,7 +144,7 @@ public class Syntax_Analyzer {
                 currentToken.getType().equals("EQUALS") || currentToken.getType().equals("NOT_EQUALS") ||
                 currentToken.getType().equals("LESS_THAN_OR_EQUALS") ||
                 currentToken.getType().equals("LESS_THAN") || currentToken.getType().equals("GREATER_THAN")) {
-            match(currentToken.getValue());
+            matchByValue(currentToken.getValue());
         } else {
             throw new RuntimeException("Expected relational operator at index " + currentTokenIndex);
         }
@@ -160,12 +160,12 @@ public class Syntax_Analyzer {
                 currentToken.getValue().equals("/") || currentToken.getValue().equals("!") || currentToken.getValue().equals("||")
                 || currentToken.getValue().equals("&&") )) {
             if(currentToken.getValue().equals("||") || currentToken.getValue().equals("&&")){
-                match(currentToken.getValue());
+                matchByValue(currentToken.getValue());
                 parseCondition();
                 break;
             }
             // Match the current operator token
-            match(currentToken.getValue());
+            matchByValue(currentToken.getValue());
 
             // Parse the next simple expression
             parseSimpleExpression();
@@ -174,24 +174,24 @@ public class Syntax_Analyzer {
 
     private void parseSimpleExpression() {
         if (currentToken.getType().equals("IDENTIFIER")) {
-            match(currentToken.getValue());
+            matchByValue(currentToken.getValue());
         } else if (currentToken.getType().equals("NUMBER")) {
-            match(currentToken.getValue());
+            matchByValue(currentToken.getValue());
         } else if (currentToken.getType().equals("STRING")) {
-            match(currentToken.getValue());
+            matchByValue(currentToken.getValue());
         } else if (currentToken.getType().equals("CHAR")) {
-                match(currentToken.getValue());
+                matchByValue(currentToken.getValue());
         } else if (currentToken.getValue().equals("(")) {
-            match("(");
+            matchByValue("(");
             parseExpression();
-            match(")");
+            matchByValue(")");
         } else {
             throw new RuntimeException("Invalid expression at index " + currentTokenIndex);
         }
     }
     private void parseBlock() {
         // Parse block of statements
-        match("{");
+        matchByValue("{");
 
         while (!currentToken.getValue().equals("}") && !currentToken.getValue().equals("EOF")) {
             if (currentToken.getValue().equals("if")) {
@@ -200,77 +200,77 @@ public class Syntax_Analyzer {
                 parseStatement(); // Parse other statements
             }
         }
-        match("}");
+        matchByValue("}");
 
     }
     private void ParseSwitchCaseDeclaration() {
                 // Match the 'switch' keyword
-                match("switch");
+                matchByValue("switch");
 
                 // Match the opening parenthesis after 'switch'
-                match("(");
+                matchByValue("(");
 
                 // Now, expect an expression after '('
                 String varType = symbolType.get(currentToken.getValue());
-                matchType("IDENTIFIER"); // Assuming IDENTIFIER represents the expression
+                matchByType("IDENTIFIER"); // Assuming IDENTIFIER represents the expression
 
                 // Match the closing parenthesis after the expression
-                match(")");
+                matchByValue(")");
 
                 // Match the opening curly brace after the expression
-                match("{");
+                matchByValue("{");
 
                 // Detect the switch-case statements inside the switch block
                 detectSwitchCaseInsideBlock(varType);
 
                 // Match the closing curly brace after the switch block
-                match("}");
+                matchByValue("}");
         }
     private void detectSwitchCaseInsideBlock(String type) {
                 // Match the 'case' keyword
         while(!(currentToken.getValue().equals("}") || currentToken.getValue().equals("default") || currentToken.getValue().equals("EOF "))) {
-            match("case");
+            matchByValue("case");
 
 
             // Now, expect a constant after 'case' *if int u need to make it in analyzer*
             if (type.equals("int")) {
-                matchType("NUMBER");
+                matchByType("NUMBER");
             } else if (type.equals("float")) {
-                matchType("FLOAT_NUMBER");
+                matchByType("FLOAT_NUMBER");
             } else if (type.equals("char")) {
-                matchType("CHAR");
+                matchByType("CHAR");
             } else if (type.equals("string")) {
-                matchType("STRING");
+                matchByType("STRING");
             }
             // Match the colon after the constant
-            matchType("COLON");
+            matchByType("COLON");
             parseStatement();
             if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("break")) {
                 // Match the 'break' keyword
-                match( "break");
+                matchByValue( "break");
                 // Match the semicolon after 'break'
-                matchType("SEMICOLON");
+                matchByType("SEMICOLON");
             }
         }
             if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("default")) {
                 // Match the 'default' keyword
-                match("default");
+                matchByValue("default");
                 // Match the colon after 'default'
-                matchType("COLON");
+                matchByType("COLON");
                 parseStatement();
             }
         }
 
 
 
-    private void match(String expectedValue) {
+    private void matchByValue(String expectedValue) {
         if (currentToken.getValue().equals(expectedValue)) {
             advance();
         } else {
             throw new RuntimeException("Expected '" + expectedValue + "' at index " + currentTokenIndex);
         }
     }
-    private void matchType(String expectedValue) {
+    private void matchByType(String expectedValue) {
         if (currentToken.getType().equals(expectedValue)) {
             advance();
         } else {
