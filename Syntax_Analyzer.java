@@ -33,6 +33,23 @@ public class Syntax_Analyzer {
         else if(currentToken.getValue().equals("for")) {
             parseForLoop();
         }
+        else if(currentToken.getValue().equals("while")){
+            parseWhileLoop();
+        }
+    }
+    private void parseWhileLoop() {
+        match("while");  // Expects the "while" keyword
+        matchType("LEFT_PAREN");  // Expects a left parenthesis token
+        parseCondition();                                         // Parses the condition expression
+        matchType("RIGHT_PAREN");  // Expects a right parenthesis token
+        matchType("LEFT_BRACE");  // Expects a left brace token
+        parseStatement();
+        // Parse the loop body
+//        while (currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("KEYWORD")) {
+//            // Call relevant parsing methods based on the current token
+//            // You may need to handle different statements or declarations within the loop body
+//        }
+        matchType("RIGHT_BRACE");  // Expects a right brace token
     }
 
     private void parseForLoop() {
@@ -121,7 +138,8 @@ public class Syntax_Analyzer {
         parseExpression();
         if (currentToken.getType().equals("GREATER_THAN_OR_EQUALS") ||
                 currentToken.getType().equals("EQUALS") || currentToken.getType().equals("NOT_EQUALS") ||
-                currentToken.getType().equals("LESS_THAN_OR_EQUALS")  ) {
+                currentToken.getType().equals("LESS_THAN_OR_EQUALS") ||
+                currentToken.getType().equals("LESS_THAN") || currentToken.getType().equals("GREATER_THAN")) {
             match(currentToken.getValue());
         } else {
             throw new RuntimeException("Expected relational operator at index " + currentTokenIndex);
