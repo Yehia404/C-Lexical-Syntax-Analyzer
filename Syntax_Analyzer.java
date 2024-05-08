@@ -43,7 +43,9 @@ public class Syntax_Analyzer {
         parseCondition();                                         // Parses the condition expression
         matchType("RIGHT_PAREN");  // Expects a right parenthesis token
         matchType("LEFT_BRACE");  // Expects a left brace token
-        parseStatement();
+        while(! currentToken.getValue().equals("}") && !currentToken.getValue().equals("EOF") ) {
+            parseStatement();
+        }
         // Parse the loop body
 //        while (currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("KEYWORD")) {
 //            // Call relevant parsing methods based on the current token
@@ -62,7 +64,9 @@ public class Syntax_Analyzer {
         parseUpdate();
         match(")");
         match("{");
-        parseStatement();
+        while(! currentToken.getValue().equals("}") && !currentToken.getValue().equals("EOF")) {
+            parseStatement();
+        }
         match("}");
     }
 
