@@ -52,12 +52,12 @@ public class Syntax_Analyzer {
 //                }
 //            }
 //        }
-//        String type1 = currentToken.getValue();
-//        matchByValue("int");
-//        String var = currentToken.getValue();
-//        matchByType("IDENTIFIER");
-//        matchByValue(";");
-//        symbolType.put(var,type1);
+        String type1 = currentToken.getValue();
+        matchByValue("int");
+        String var = currentToken.getValue();
+        matchByType("IDENTIFIER");
+        matchByValue(";");
+        symbolType.put(var,type1);
         parseStatement();
 
         if (currentToken.getType().equals("EOF")) {
@@ -410,7 +410,7 @@ public class Syntax_Analyzer {
     private void parseForLoop() {
         matchByValue("for");
         matchByValue("(");
-        parseInitialization();
+        //parseInitialization();
         matchByValue(";");
         parseCondition();
         matchByValue(";");
