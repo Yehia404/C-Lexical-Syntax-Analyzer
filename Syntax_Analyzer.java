@@ -133,7 +133,7 @@ public class Syntax_Analyzer {
 
             }
             else if (currentToken.getType().equals("NUMBER") || currentToken.getType().equals("FLOAT_NUMBER")){ // Declaration with Number (Operations)
-                parseExpression(tokenType);
+                parseNumOperation(tokenType);
             }
             else {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
@@ -229,7 +229,7 @@ public class Syntax_Analyzer {
         int count = 0;
 
         // Match the initial element
-        parseExpression(tokentype);
+        parseNumOperation(tokentype);
 
         count++;
 
@@ -237,7 +237,7 @@ public class Syntax_Analyzer {
         while (currentToken.getType().equals("COMMA")) {
             matchByType("COMMA");
 
-            parseExpression(tokentype);
+            parseNumOperation(tokentype);
 
             count++;
         }
@@ -248,7 +248,7 @@ public class Syntax_Analyzer {
         }
     }
 
-    private void parseExpression(String tokentype) {
+    private void parseNumOperation(String tokentype) {
         parseTerm(tokentype);
         while (currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
                 currentToken.getType().equals("DIV_OP") || currentToken.getType().equals("SUB_OP") ) {
@@ -292,7 +292,7 @@ public class Syntax_Analyzer {
     private void parseFactor(String tokentype) {
         if (currentToken.getType().equals("LEFT_PAREN")) {
             matchByType("LEFT_PAREN");
-            parseExpression(tokentype);
+            parseNumOperation(tokentype);
             matchByType("RIGHT_PAREN");
         } else {
             parseNumber(tokentype);
