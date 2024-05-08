@@ -26,12 +26,19 @@ public class Syntax_Analyzer {
             String tokenType = currentToken.getType();
             if (tokenType.equals("KEYWORD")){
                 String dataType = type();
+                String variable = identifier();
+                symbolType.put(variable,dataType);
+                if (currentToken.getType().equals("LEFT_PAREN")) {
+                    function(variable);
+                }
+                else {
+                    declaration(dataType);
+                }
             }
         }
 
 
         if (currentToken.getType().equals("EOF")) {
-            System.out.println("Parsing successful!");
             System.out.println("<----------SYMBOL Type---------->");
             for(String i : symbolType.keySet()){
                 String type = symbolType.get(i);
@@ -42,25 +49,23 @@ public class Syntax_Analyzer {
                 List<String> parameters = funcParameters.get(functionName);
                 System.out.println("Function: " + functionName + "  Parameters: " + parameters + "  No of Parameters: " + parameters.size());
             }
-
+            System.out.println("Parsing successful!");
         } else {
             System.out.println("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
         }
     }
 
-    private void declaration() {
-        String tokenType = type();
-        String identifier = identifier();
-        symbolType.put(identifier,tokenType);
-        if (currentToken.getType().equals("SEMICOLON")) {
+    private void declaration(String tokenType) {
+        if (currentToken.getType().equals("SEMICOLON")) { //Declaration only
             matchByType("SEMICOLON");
-        } else if (currentToken.getType().equals("ASSIGN_OP")) {
+            return;
+        } else if (currentToken.getType().equals("ASSIGN_OP")) { // Declaration with initialization
             matchByType("ASSIGN_OP");
 
-            if (tokenType.equalsIgnoreCase("char")) {
+            if (tokenType.equalsIgnoreCase("char")) { // Declaration with char initialization
                 matchByType("CHAR");
             }
-            else if (currentToken.getType().equals("IDENTIFIER")){
+            else if (currentToken.getType().equals("IDENTIFIER")){ // Declaration with function call
                 String functionName = currentToken.getValue() ;
                 String functionType = symbolType.get(functionName);
                 if (functionType == null){
@@ -69,20 +74,29 @@ public class Syntax_Analyzer {
                 matchByType("IDENTIFIER");
                 if (tokenType.equals(functionType)){
                     matchByType("LEFT_PAREN");
+                    List<String> parameters;
+                    parameters = funcParameters.get(functionName);
+                    int paramLength = parameters.size();
+                    int argumentCounter = 0;
+                    int typeCounter = 0;
 
                     while(!(currentToken.getType().equals("RIGHT_PAREN"))) {
-                        List<String> parameters;
 
                         String paramName = identifier();
                         if (paramName == null) {
                             throw new RuntimeException("Parsing failed. Unexpected token (Expected an argument name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                         }
                         String paramType = symbolType.get(paramName);
-                        parameters = funcParameters.get(functionName);
-                        for (String param : parameters){
-                            if(!(param.equals(paramType)))
-                                throw new RuntimeException("Parsing failed. Unexpected token (Invalid argument Type): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
-                        }
+
+                        if(argumentCounter == parameters.size())
+                            throw new RuntimeException("Parsing failed. Unexpected token (Invalid Number of arguments), " + "Line Number: " + currentToken.getLineNumber());
+
+                        if(!(paramType.equals(parameters.get(typeCounter))))
+                            throw new RuntimeException("Parsing failed. Unexpected token (Invalid argument Type): " + paramName + " Line Number: " + currentToken.getLineNumber());
+
+                        typeCounter++;
+                        argumentCounter++;
+
                         if (currentToken.getType().equals("COMMA")) {
                             matchByType("COMMA");
                             if (currentToken.getType().equals("RIGHT_PAREN")) {
@@ -90,6 +104,9 @@ public class Syntax_Analyzer {
                             }
 
                         }
+                    }
+                    if(argumentCounter < paramLength || argumentCounter > paramLength){
+                        throw new RuntimeException("Parsing failed. Unexpected token (Invalid Number of arguments), " + "Line Number: " + currentToken.getLineNumber());
                     }
 
                     matchByType("RIGHT_PAREN");
@@ -99,14 +116,14 @@ public class Syntax_Analyzer {
                 }
 
             }
-            else if (currentToken.getType().equals("NUMBER") || currentToken.getType().equals("FLOAT_NUMBER")){
+            else if (currentToken.getType().equals("NUMBER") || currentToken.getType().equals("FLOAT_NUMBER")){ // Declaration with Number (Operations)
                 parseExpression(tokenType);
             }
             else {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
 
-        } else if (currentToken.getType().equals("LEFT_BRACKET")) {
+        } else if (currentToken.getType().equals("LEFT_BRACKET")) { // Array Declaration
             matchByType("LEFT_BRACKET");
             int size = Integer.parseInt(currentToken.getValue());
             if (currentToken.getType().equals("NUMBER")) {
@@ -258,11 +275,8 @@ public class Syntax_Analyzer {
     }
 
 
-    private void function()
+    private void function(String functionName)
     {
-        String returnType = type();
-        String functionName = identifier();
-        symbolType.put(functionName,returnType);
         matchByType("LEFT_PAREN");
         parseParameters(functionName);
         matchByType("RIGHT_PAREN");
@@ -326,5 +340,17 @@ public class Syntax_Analyzer {
             }
         }
     }
+
+    private void retract() {
+        while (currentTokenIndex > 0) {
+            currentTokenIndex--;
+
+            if (!tokens.get(currentTokenIndex).getType().equalsIgnoreCase("WHITESPACE")) {
+                currentToken = tokens.get(currentTokenIndex);
+                break;
+            }
+        }
+    }
+
 }
 
