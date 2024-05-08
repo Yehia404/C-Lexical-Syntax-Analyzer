@@ -10,6 +10,7 @@ public class Syntax_Analyzer {
     private HashMap<String,List<String>> funcParameters = new HashMap<>();
     private int currentTokenIndex;
     private Token currentToken;
+    int nestingLevel = 0; // Start with 1 to account for the outermost block
 
     public Syntax_Analyzer(List<Token> tokens,HashMap<Integer,String> symbolTable) {
         this.tokens = tokens;
@@ -26,8 +27,8 @@ public class Syntax_Analyzer {
             if(currentToken.getType().equals("PRE_PROCESSOR_PATTERN")){
                 Preprocessor();
             }
-            String tokenType = currentToken.getType();
-            if (tokenType.equals("KEYWORD")){
+
+            if (currentToken.getType().equals("KEYWORD")){
                 String dataType;
                 if (currentToken.getValue().equalsIgnoreCase("void")){
                      dataType = "void";
@@ -38,12 +39,16 @@ public class Syntax_Analyzer {
                 }
 
                 String variable = identifier();
-                symbolType.put(variable,dataType);
-                if (currentToken.getType().equals("LEFT_PAREN")) {
-                    function(variable);
+                if(dataType.equals("int") && variable.equals("main")){
+                    parseMain();
                 }
                 else {
-                    declaration(dataType);
+                    symbolType.put(variable, dataType);
+                    if (currentToken.getType().equals("LEFT_PAREN")) {
+                        parseFunction(variable);
+                    } else {
+                        declaration(dataType);
+                    }
                 }
             }
         }
@@ -164,7 +169,37 @@ public class Syntax_Analyzer {
         matchByType("SEMICOLON");
     }
 
+    private void parseMain(){
+            matchByType("LEFT_BRACE");
 
+            while(nestingLevel>0){
+
+                if (currentToken.getType().equals("KEYWORD")){
+                    if(currentToken.getValue().equals("return")){
+                        matchByValue("return");
+                        if(currentToken.getType().equals("NUMBER")) {
+                            matchByType("NUMBER");
+                        }
+                        matchByType("SEMICOLON");
+                    }
+                    else{
+                        String dataType = type();
+                        String variable = identifier();
+                        symbolType.put(variable, dataType);
+                        declaration(dataType);
+
+                    }
+
+                }
+                if(currentToken.getType().equals("RIGHT_BRACE")){
+                    matchByType("RIGHT_BRACE");
+                }
+                else if (currentToken.getType().equals("EOF")){
+                    throw new RuntimeException("Parsing failed. Unexpected token (Missing Brace): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                }
+            }
+
+    }
 
     private String type() {
         String tokenType = currentToken.getValue();
@@ -179,7 +214,7 @@ public class Syntax_Analyzer {
         }
         return null;
     }
-//    b(char|const|double|enum|float|int|long|short|static|struct|typedef|unsigned)
+
 
     private String identifier() {
         String identifier = currentToken.getValue();
@@ -286,7 +321,7 @@ public class Syntax_Analyzer {
     }
 
 
-    private void function(String functionName)
+    private void parseFunction(String functionName)
     {
         matchByType("LEFT_PAREN");
         parseParameters(functionName);
@@ -334,6 +369,11 @@ public class Syntax_Analyzer {
 
     private void matchByType(String expectedType) {
         if (currentToken.getType().equals(expectedType)) {
+            if(expectedType.equals("LEFT_BRACE"))
+                nestingLevel++;
+            if(expectedType.equals("RIGHT_BRACE"))
+                nestingLevel--;
+
             advance();
         }
         else{
