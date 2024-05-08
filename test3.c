@@ -1,4 +1,6 @@
-void func (int a , int b){}
+#include <stdio.h>
+int func (int a , int b){}
+
 
 float d;
 int c;

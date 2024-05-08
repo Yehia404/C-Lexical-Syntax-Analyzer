@@ -23,6 +23,9 @@ public class Syntax_Analyzer {
             if (currentToken.getType().equals("EOF")) {
                 break;
             }
+            if(currentToken.getType().equals("PRE_PROCESSOR_PATTERN")){
+                Preprocessor();
+            }
             String tokenType = currentToken.getType();
             if (tokenType.equals("KEYWORD")){
                 String dataType;
@@ -317,6 +320,16 @@ public class Syntax_Analyzer {
         }
         funcParameters.put(functionName,paramTypes);
 
+    }
+    private void Preprocessor(){
+        matchByType("PRE_PROCESSOR_PATTERN");  //matching
+        matchByType("LESS_THAN");
+        matchByType("IDENTIFIER");
+        if(currentToken.getValue().equals(".")) {
+            matchByType("DOT");
+            matchByType("IDENTIFIER");
+        }
+        matchByType("GREATER_THAN");
     }
 
     private void matchByType(String expectedType) {
