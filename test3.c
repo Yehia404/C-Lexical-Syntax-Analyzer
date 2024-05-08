@@ -1,5 +1,1 @@
-int func (int a , int b){}
-
-int c;
-int b;
-int a = func (c, b);
+while(i>=5&&i==6){}

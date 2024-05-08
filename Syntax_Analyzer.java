@@ -19,16 +19,16 @@ public class Syntax_Analyzer {
     }
 
     public void parse() {
-        while (!currentToken.getType().equals("EOF")) {
-            if (currentToken.getType().equals("EOF")) {
-                break;
-            }
-            String tokenType = currentToken.getType();
-            if (tokenType.equals("KEYWORD")){
-                String dataType = type();
-            }
-        }
-
+//        while (!currentToken.getType().equals("EOF")) {
+//            if (currentToken.getType().equals("EOF")) {
+//                break;
+//            }
+//            String tokenType = currentToken.getType();
+//            if (tokenType.equals("KEYWORD")){
+//                String dataType = type();
+//            }
+//        }
+        parseWhileLoop();
 
         if (currentToken.getType().equals("EOF")) {
             System.out.println("Parsing successful!");
@@ -185,6 +185,56 @@ public class Syntax_Analyzer {
         }
     }
 
+    private void parseCondition() {
+        parseExpression();
+        if (currentToken.getType().equals("GREATER_THAN_OR_EQUALS") ||
+                currentToken.getType().equals("EQUALS") || currentToken.getType().equals("NOT_EQUALS") ||
+                currentToken.getType().equals("LESS_THAN_OR_EQUALS")  ) {
+            matchByValue(currentToken.getValue());
+        } else {
+            throw new RuntimeException("Expected relational operator at index " + currentTokenIndex);
+        }
+        parseExpression();
+    }
+
+    private void parseExpression() {
+        // Parse the first simple expression
+        parseSimpleExpression();
+        // LESA BA2Y OPERATORSS
+        // While there are more tokens to process and the current token is an operator
+        while ((currentToken.getValue().equals("+") || currentToken.getValue().equals("-") ||currentToken.getValue().equals("*") ||
+                currentToken.getValue().equals("/") || currentToken.getValue().equals("!") || currentToken.getValue().equals("||")
+                || currentToken.getValue().equals("&&") )) {
+            if(currentToken.getValue().equals("||") || currentToken.getValue().equals("&&")){
+                matchByValue(currentToken.getValue());
+                parseCondition();
+                break;
+            }
+            // Match the current operator token
+            matchByValue(currentToken.getValue());
+
+            // Parse the next simple expression
+            parseSimpleExpression();
+        }
+    }
+
+    private void parseSimpleExpression() {
+        if (currentToken.getType().equals("IDENTIFIER")) {
+            matchByValue(currentToken.getValue());
+        } else if (currentToken.getType().equals("NUMBER")) {
+            matchByValue(currentToken.getValue());
+        } else if (currentToken.getType().equals("STRING")) {
+            matchByValue(currentToken.getValue());
+        } else if (currentToken.getType().equals("CHAR")) {
+            matchByValue(currentToken.getValue());
+        } else if (currentToken.getValue().equals("(")) {
+            matchByValue("(");
+            parseExpression();
+            matchByValue(")");
+        } else {
+            throw new RuntimeException("Invalid expression at index " + currentTokenIndex);
+        }
+    }
     private void parseExpression(String tokentype) {
         parseTerm(tokentype);
         while (currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
@@ -314,6 +364,21 @@ public class Syntax_Analyzer {
         }
     }
 
+    private void parseWhileLoop() {
+        matchByValue("while");  // Expects the "while" keyword
+        matchByType("LEFT_PAREN");  // Expects a left parenthesis token
+        parseCondition();                                         // Parses the condition expression
+        matchByType("RIGHT_PAREN");  // Expects a right parenthesis token
+        matchByType("LEFT_BRACE");  // Expects a left brace token
+
+        // Parse the loop body
+//        while (currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("KEYWORD")) {
+//            // Call relevant parsing methods based on the current token
+//            // You may need to handle different statements or declarations within the loop body
+//        }
+
+        matchByType("RIGHT_BRACE");  // Expects a right brace token
+    }
 
     private void advance() {
         currentTokenIndex++;
