@@ -52,6 +52,12 @@ public class Syntax_Analyzer {
 //                }
 //            }
 //        }
+//        String type1 = currentToken.getValue();
+//        matchByValue("int");
+//        String var = currentToken.getValue();
+//        matchByType("IDENTIFIER");
+//        matchByValue(";");
+//        symbolType.put(var,type1);
         parseStatement();
 
         if (currentToken.getType().equals("EOF")) {
@@ -430,7 +436,7 @@ public class Syntax_Analyzer {
         } else if (currentToken.getValue().equals("++") || currentToken.getValue().equals("--")) {
             parseIncrementDecrement();
         } else {
-            throw new RuntimeException("Expected a valid update expression at index " + currentTokenIndex);
+            throw new RuntimeException("Expected a valid update expression at line number " + currentToken.getLineNumber());
         }
     }
 
@@ -453,17 +459,18 @@ public class Syntax_Analyzer {
             // yehia hyzwdha w zawed li nfsak fyha sa3etha eno y tchedk eno numeric literal
             String type = symbolType.get(currentToken.getValue());
             if(type.isEmpty()){
-                throw new RuntimeException("variable is not initialized");
+                throw new RuntimeException("variable is not initialized at line numebr "+currentToken.getLineNumber());
             }
             else if(type.equals("int")) {
                 //parseExpression();
+                //to be continued.....
             }
             else{
-                throw new RuntimeException("Expected int type at index " + currentTokenIndex);
+                throw new RuntimeException("Expected int type at line number " + currentToken.getLineNumber());
             }
         }
         else{
-            throw new RuntimeException("Expected int type at index " + currentTokenIndex);
+            throw new RuntimeException("Expected int type at line number " + currentToken.getLineNumber());
         }
     }
 
@@ -493,7 +500,7 @@ public class Syntax_Analyzer {
                 currentToken.getType().equals("LESS_THAN") || currentToken.getType().equals("GREATER_THAN")) {
             matchByValue(currentToken.getValue());
         } else {
-            throw new RuntimeException("Expected relational operator at index " + currentTokenIndex);
+            throw new RuntimeException("Expected relational operator at line number " + currentToken.getLineNumber());
         }
         parseExpression();
     }
@@ -505,7 +512,7 @@ public class Syntax_Analyzer {
         // While there are more tokens to process and the current token is an operator
         while ((currentToken.getValue().equals("+") || currentToken.getValue().equals("-") ||currentToken.getValue().equals("*") ||
                 currentToken.getValue().equals("/") || currentToken.getValue().equals("!") || currentToken.getValue().equals("||")
-                || currentToken.getValue().equals("&&") )) {
+                || currentToken.getValue().equals("&&") || currentToken.getValue().equals("%"))) {
             if(currentToken.getValue().equals("||") || currentToken.getValue().equals("&&")){
                 matchByValue(currentToken.getValue());
                 parseCondition();
@@ -521,6 +528,10 @@ public class Syntax_Analyzer {
 
     private void parseSimpleExpression() {
         if (currentToken.getType().equals("IDENTIFIER")) {
+            String varType = symbolType.get(currentToken.getValue());
+            if(varType.isEmpty()){
+                throw new RuntimeException("variable is not initialized at line number "+currentToken.getLineNumber());
+            }
             matchByValue(currentToken.getValue());
         } else if (currentToken.getType().equals("NUMBER")) {
             matchByValue(currentToken.getValue());
@@ -533,7 +544,7 @@ public class Syntax_Analyzer {
             parseExpression();
             matchByValue(")");
         } else {
-            throw new RuntimeException("Invalid expression at index " + currentTokenIndex);
+            throw new RuntimeException("Invalid expression at line number " + currentToken.getLineNumber());
         }
     }
     private void parseBlock() {
@@ -559,6 +570,9 @@ public class Syntax_Analyzer {
 
         // Now, expect an expression after '('
         String varType = symbolType.get(currentToken.getValue());
+        if(varType.isEmpty()){
+            throw new RuntimeException("variable is not initialized at line number "+currentToken.getLineNumber());
+        }
         matchByType("IDENTIFIER"); // Assuming IDENTIFIER represents the expression
 
         // Match the closing parenthesis after the expression
