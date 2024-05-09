@@ -10,7 +10,7 @@ int main{
     int b = 10;
     int a = sum (c,b);
 
-
+    printf("Yehia %d", a);
     if(c>b){
         for(int i=0;i<9;i++){
             int g = 10 + 9;

@@ -14,6 +14,10 @@ public class Compiler {
     public void Compile(String sourceCodeFile){
         scanner.lexicalAnalyze(sourceCodeFile);
         parser = new Syntax_Analyzer(scanner.getTokens(),scanner.getSymbolTable());
-        parser.parse();
+        ParseTreeNode parseTree = parser.parse();
+
+        if (parseTree != null) {
+            parseTree.visualizeTree();
+        }
     }
 }

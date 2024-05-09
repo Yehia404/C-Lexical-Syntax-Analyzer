@@ -5,27 +5,46 @@ import java.util.List;
 
 public class Syntax_Analyzer {
     private List<Token> tokens;
+    private ParseTreeNode currentParseNode;
     private HashMap<Integer,String> symbolTable;
-    private HashMap<String,String> symbolType = new HashMap<>();
+    private static HashMap<String,String> symbolType = new HashMap<>();
     private HashMap<String,List<String>> funcParameters = new HashMap<>();
     private int currentTokenIndex;
     private Token currentToken;
     int nestingLevel = 0; // Start with 1 to account for the outermost block
-
+    static{
+        symbolType.put("printf","void");
+        symbolType.put("scanf","void");
+    }
     public Syntax_Analyzer(List<Token> tokens,HashMap<Integer,String> symbolTable) {
         this.tokens = tokens;
+        this.currentParseNode = null;
         this.symbolTable = symbolTable;
         currentTokenIndex = 0;
         currentToken = tokens.get(0);
     }
+
+    private void createParseNode(String type, String value) {
+        ParseTreeNode node = new ParseTreeNode(type, value);
+        if (currentParseNode != null) {
+            currentParseNode.addChild(node);
+        }
+        currentParseNode = node;
+    }
+
+    private void moveUpInParseTree() {
+        currentParseNode = currentParseNode.getParent();
+    }
 //    const/static/enum/typedef/struct
-    public void parse() {
+    public ParseTreeNode parse() {
+        createParseNode("Program", "");
         while (!currentToken.getType().equals("EOF")) {
             if (currentToken.getType().equals("EOF")) {
                 break;
             }
             if(currentToken.getType().equals("PRE_PROCESSOR_PATTERN")){
                 Preprocessor();
+//                moveUpInParseTree();
             }
 
             if (currentToken.getType().equals("KEYWORD")){
@@ -72,9 +91,11 @@ public class Syntax_Analyzer {
                 System.out.println("Function: " + functionName + "  Parameters: " + parameters + "  No of Parameters: " + parameters.size());
             }
             System.out.println("Parsing successful!");
+            return currentParseNode;
         } else {
             System.out.println("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
         }
+        return null;
     }
 
     private void declaration(String tokenType) {
@@ -104,18 +125,36 @@ public class Syntax_Analyzer {
                         int typeCounter = 0;
 
                         while (!(currentToken.getType().equals("RIGHT_PAREN"))) {
-
-                            String paramName = identifier();
-                            if (paramName == null) {
-                                throw new RuntimeException("Parsing failed. Unexpected token (Expected an argument name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                            String paramName;
+                            String paramType;
+                            if(currentToken.getType().equals("IDENTIFIER")){
+                                paramName = identifier();
+                                if (paramName == null) {
+                                    throw new RuntimeException("Parsing failed. Unexpected token (Expected an argument name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                                }
+                                paramType = symbolType.get(paramName);
                             }
-                            String paramType = symbolType.get(paramName);
+                            else if (currentToken.getType().equals("NUMBER")){
+                                paramType = "int";
+                                matchByType("NUMBER");
+                            }
+                            else if(currentToken.getType().equals("FLOAT_NUMBER")){
+                                paramType = "float";
+                                matchByType("FLOAT_NUMBER");
+                            }
+                            else if (currentToken.getType().equals("CHAR")){
+                                paramType = "char";
+                                matchByType("CHAR");
+                            }
+                            else{
+                                throw new RuntimeException("Parsing failed. Unexpected token (Invalid Argument Datatype), " + "Line Number: " + currentToken.getLineNumber());
+                            }
 
                             if (argumentCounter == parameters.size())
                                 throw new RuntimeException("Parsing failed. Unexpected token (Invalid Number of arguments), " + "Line Number: " + currentToken.getLineNumber());
 
                             if (!(paramType.equals(parameters.get(typeCounter))))
-                                throw new RuntimeException("Parsing failed. Unexpected token (Invalid argument Type): " + paramName + " Line Number: " + currentToken.getLineNumber());
+                                throw new RuntimeException("Parsing failed. Unexpected token (Invalid argument Type) " + " Line Number: " + currentToken.getLineNumber());
 
                             typeCounter++;
                             argumentCounter++;
@@ -152,7 +191,78 @@ public class Syntax_Analyzer {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
 
-        } else if (currentToken.getType().equals("LEFT_BRACKET")) { // Array Declaration
+        }else if (currentToken.getType().equals("IDENTIFIER")){
+            String functionName = currentToken.getValue();
+            matchByType("IDENTIFIER");
+            if(currentToken.getType().equals("LEFT_PAREN")){
+                matchByType("LEFT_PAREN");
+                List<String> parameters;
+                parameters = funcParameters.get(functionName);
+                int paramLength = parameters.size();
+                int argumentCounter = 0;
+                int typeCounter = 0;
+
+                while (!(currentToken.getType().equals("RIGHT_PAREN"))) {
+                    String paramName;
+                    String paramType;
+                    if(currentToken.getType().equals("IDENTIFIER")){
+                        paramName = identifier();
+                        if (paramName == null) {
+                            throw new RuntimeException("Parsing failed. Unexpected token (Expected an argument name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                        }
+                        paramType = symbolType.get(paramName);
+                        if (paramType == null) {
+                            throw new RuntimeException("Parsing failed. Unexpected token (Invalid Argument): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                        }
+                    }
+                    else if (currentToken.getType().equals("NUMBER")){
+                        paramType = "int";
+                        matchByType("NUMBER");
+                    }
+                    else if(currentToken.getType().equals("FLOAT_NUMBER")){
+                        paramType = "float";
+                        matchByType("FLOAT_NUMBER");
+                    }
+                    else if (currentToken.getType().equals("CHAR")){
+                        paramType = "char";
+                        matchByType("CHAR");
+                    }
+                    else{
+                        throw new RuntimeException("Parsing failed. Unexpected token (Invalid Argument Datatype), " + "Line Number: " + currentToken.getLineNumber());
+                    }
+
+
+
+                    if (argumentCounter == parameters.size())
+                        throw new RuntimeException("Parsing failed. Unexpected token (Invalid Number of arguments), " + "Line Number: " + currentToken.getLineNumber());
+
+                    if (!(paramType.equals(parameters.get(typeCounter))))
+                        throw new RuntimeException("Parsing failed. Unexpected token (Invalid argument Type) " + " Line Number: " + currentToken.getLineNumber());
+
+                    typeCounter++;
+                    argumentCounter++;
+
+                    if (currentToken.getType().equals("COMMA")) {
+                        matchByType("COMMA");
+                        if (currentToken.getType().equals("RIGHT_PAREN")) {
+                            throw new RuntimeException("Parsing failed. Unexpected token (Trailing comma in argument list): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                        }
+
+                    }
+                }
+                if (argumentCounter < paramLength || argumentCounter > paramLength) {
+                    throw new RuntimeException("Parsing failed. Unexpected token (Invalid Number of arguments), " + "Line Number: " + currentToken.getLineNumber());
+                }
+
+                matchByType("RIGHT_PAREN");
+            }
+            else {
+                throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+            }
+
+        }
+
+        else if (currentToken.getType().equals("LEFT_BRACKET")) { // Array Declaration
             matchByType("LEFT_BRACKET");
             int size = Integer.parseInt(currentToken.getValue());
             if (currentToken.getType().equals("NUMBER")) {
@@ -238,20 +348,50 @@ public class Syntax_Analyzer {
             if (datatype == null){
                 throw new RuntimeException("Parsing failed. Unexpected token (Variable not defined): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
-            matchByType("IDENTIFIER");
-            if(pre){
-                matchByType("SEMICOLON");
+
+            if(datatype.equals("void")){
+                if(currentToken.getValue().equals("scanf") || currentToken.getValue().equals("printf")){
+                    matchByType("IDENTIFIER");
+                    matchByType("LEFT_PAREN");
+                    while(!currentToken.getType().equals("RIGHT_PAREN")){
+                        matchByType("STRING_LITERAL");
+                        if (currentToken.getType().equals("COMMA")){
+                            matchByType("COMMA");
+                        }
+                        if(currentToken.getType().equals("IDENTIFIER")){
+                            String dataType = symbolType.get(currentToken.getValue());
+                            if(dataType == null){
+                                throw new RuntimeException("Parsing failed. Unexpected token (Variable not defined): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                            }
+                            matchByType("IDENTIFIER");
+                            if (currentToken.getType().equals("COMMA")){
+                                matchByType("COMMA");
+                            }
+                        }
+                    }
+                    matchByType("RIGHT_PAREN");
+                    matchByType("SEMICOLON");
+
+                }
+                else{
+                    declaration(datatype);
+                }
+
             }
-            else if(currentToken.getType().equals("INCREMENT")){
-                matchByType("INCREMENT");
-                matchByType("SEMICOLON");
-            }
-            else if(currentToken.getType().equals("DECREMENT")){
-                matchByType("DECREMENT");
-                matchByType("SEMICOLON");
-            }
-            else if (currentToken.getType().equals("ASSIGN_OP")) {
-                declaration(datatype);
+
+            else {
+                matchByType("IDENTIFIER");
+                if (pre) {
+                    matchByType("SEMICOLON");
+                } else if (currentToken.getType().equals("INCREMENT")) {
+                    matchByType("INCREMENT");
+                    matchByType("SEMICOLON");
+                } else if (currentToken.getType().equals("DECREMENT")) {
+                    matchByType("DECREMENT");
+                    matchByType("SEMICOLON");
+                } else if (currentToken.getType().equals("ASSIGN_OP")) {
+                    declaration(datatype);
+                }
             }
 
         }

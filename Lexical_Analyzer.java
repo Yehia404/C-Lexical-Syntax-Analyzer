@@ -112,7 +112,7 @@ public class Lexical_Analyzer {
             } else if (tokenValue.matches(PUNCTUATION_PATTERN)) {
                  tokenType = SYMBOL_TYPES.get(tokenValue);
             } else if (tokenValue.matches(STRING_PATTERN)) {
-                tokenType = "STRING";
+                tokenType = "STRING_LITERAL";
             } else if (tokenValue.matches(CHAR_PATTERN)) {
                  tokenType = "CHAR";
             } else if (tokenValue.matches(WHITESPACE_PATTERN)) {
