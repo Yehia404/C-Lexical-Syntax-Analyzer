@@ -43,11 +43,15 @@ public class Syntax_Analyzer {
                 break;
             }
             if(currentToken.getType().equals("PRE_PROCESSOR_PATTERN")){
+                createParseNode("PREPROCESSOR",null);
                 Preprocessor();
-//                moveUpInParseTree();
+                while (!currentParseNode.getType().equals("Program")){
+                    moveUpInParseTree();
+                }
             }
 
             if (currentToken.getType().equals("KEYWORD")){
+                createParseNode("Declaration",null);
                 String dataType;
                 if (currentToken.getValue().equalsIgnoreCase("void")){
                      dataType = "void";
@@ -60,6 +64,9 @@ public class Syntax_Analyzer {
                 String variable = identifier();
                 if(dataType.equals("int") && variable.equals("main")){
                     parseMain();
+                    while (!currentParseNode.getType().equals("Program")){
+                        moveUpInParseTree();
+                    }
                 }
                 else {
                     symbolType.put(variable, dataType);
@@ -68,14 +75,21 @@ public class Syntax_Analyzer {
                     } else {
                         declaration(dataType);
                     }
+                    while (!currentParseNode.getType().equals("Program")){
+                        moveUpInParseTree();
+                    }
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
+                createParseNode("INITIALIZATION",null);
                 parseInitialization();
+                while (!currentParseNode.getType().equals("Program")){
+                    moveUpInParseTree();
+                }
             }
-            else{
-                throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
-            }
+//            else{
+//                throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+//            }
         }
 
 
@@ -114,8 +128,10 @@ public class Syntax_Analyzer {
                 if (functionType == null){
                     throw new RuntimeException("Parsing failed. Unexpected token (Variable or function is not defined): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
-                matchByType("IDENTIFIER");
+                advance();
                 if (currentToken.getType().equals("LEFT_PAREN")){
+                    retract();
+                    matchByType("IDENTIFIER");
                     if (tokenType.equals(functionType)) {
                         matchByType("LEFT_PAREN");
                         List<String> parameters;
@@ -294,11 +310,14 @@ public class Syntax_Analyzer {
 
     private void parseMain(){
             matchByType("LEFT_BRACE");
+            createParseNode("Body",null);
 
             while(nestingLevel>0){
 
                 if (currentToken.getType().equals("KEYWORD")){
                     if(currentToken.getValue().equals("return")){
+                        moveUpInParseTree();
+                        createParseNode("Return",null);
                         matchByValue("return");
                         if(currentToken.getType().equals("NUMBER")) {
                             matchByType("NUMBER");
@@ -307,23 +326,33 @@ public class Syntax_Analyzer {
                     }
                     else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                             currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
+                        createParseNode("Declaration",null);
                         String dataType = type();
                         String variable = identifier();
                         symbolType.put(variable, dataType);
                         declaration(dataType);
+                        while (!currentParseNode.getType().equals("Body"))
+                            moveUpInParseTree();
                     }
                     else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
+                        createParseNode("Statement",null);
                         parseStatement();
+                        while (!currentParseNode.getType().equals("Body"))
+                            moveUpInParseTree();
                     }
                 }
                 else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
+                    createParseNode("Intialization",null);
                     parseInitialization();
+                    while (!currentParseNode.getType().equals("Body"))
+                        moveUpInParseTree();
                 }
                 else{
                     throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
 
                 if(currentToken.getType().equals("RIGHT_BRACE")){
+                    moveUpInParseTree();
                     matchByType("RIGHT_BRACE");
                 }
                 else if (currentToken.getType().equals("EOF")){
@@ -405,7 +434,7 @@ public class Syntax_Analyzer {
                 currentToken.getValue().equalsIgnoreCase("double") ||
                 currentToken.getValue().equalsIgnoreCase("long")||
                 currentToken.getValue().equalsIgnoreCase("short")){
-            advance();
+            matchByType("KEYWORD");
             return tokenType;
         }
         return null;
@@ -415,7 +444,7 @@ public class Syntax_Analyzer {
     private String identifier() {
         String identifier = currentToken.getValue();
         if (currentToken.getType().equals("IDENTIFIER")) {
-            advance();
+            matchByType("IDENTIFIER");
             return identifier;
         }
         return null;
@@ -500,11 +529,11 @@ public class Syntax_Analyzer {
         if(currentToken.getType().equals("IDENTIFIER")) {
             String tokenType = symbolType.get(currentToken.getValue());
             if (tokenType.equalsIgnoreCase("int")) {
-                advance();
+                matchByType("IDENTIFIER");
             } else if (tokenType.equalsIgnoreCase("float") || tokenType.equalsIgnoreCase("double")) {
-                advance();
+                matchByType("IDENTIFIER");
             } else if (tokenType.equalsIgnoreCase("long") || tokenType.equalsIgnoreCase("short")) {
-                advance();
+                matchByType("IDENTIFIER");
             }
         }
         else{
@@ -524,7 +553,11 @@ public class Syntax_Analyzer {
         matchByType("RIGHT_PAREN");
         matchByType("LEFT_BRACE");
         parseBody();
+        while (!currentParseNode.getType().equals("Declaration")){
+            moveUpInParseTree();
+        }
         if(currentToken.getValue().equals("return")){
+            createParseNode("Return",null);
             matchByValue("return");
             if(!functionType.equals("void")){
                 if(currentToken.getType().equals("IDENTIFIER")){
@@ -536,6 +569,7 @@ public class Syntax_Analyzer {
                     }
                 }
             }
+            moveUpInParseTree();
             matchByType("SEMICOLON");
         }
         matchByType("RIGHT_BRACE");
@@ -577,8 +611,10 @@ public class Syntax_Analyzer {
         }
         matchByType("GREATER_THAN");
     }
-    private void parseBody() {
 
+    private void parseBody() {
+        createParseNode("Body",null);
+        ParseTreeNode parent = currentParseNode.getParent();
         while(!currentToken.getType().equals("RIGHT_BRACE") && !currentToken.getType().equals("EOF")){
             if (currentToken.getType().equals("KEYWORD")){
                 if(currentToken.getValue().equals("return")){
@@ -586,13 +622,19 @@ public class Syntax_Analyzer {
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                         currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
+                    createParseNode("Declaration",null);
                     String dataType = type();
                     String variable = identifier();
                     symbolType.put(variable, dataType);
                     declaration(dataType);
+                    while (!currentParseNode.getType().equals("Body"))
+                        moveUpInParseTree();
                 }
                 else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
-                        parseStatement();
+                    createParseNode("Statement",null);
+                    parseStatement();
+                    while (!currentParseNode.getType().equals("Body"))
+                        moveUpInParseTree();
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("break")) {
                     matchByValue( "break");
@@ -607,14 +649,21 @@ public class Syntax_Analyzer {
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
+                createParseNode("Initialization", null);
                 parseInitialization();
+                while (!currentParseNode.getType().equals("Body"))
+                    moveUpInParseTree();
             }
             else {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
         }
+        while (currentParseNode != parent)
+            moveUpInParseTree();
     }
     private void parseCaseBody(){
+        createParseNode("Body",null);
+        ParseTreeNode parent = currentParseNode.getParent();
         while((!currentToken.getValue().equals("case") || !currentToken.getValue().equals("default") || !currentToken.getType().equals("RIGHT_BRACE"))  && !currentToken.getType().equals("EOF")){
             if(currentToken.getValue().equals("case") || currentToken.getValue().equals("default") || currentToken.getType().equals("RIGHT_BRACE"))
                 break;
@@ -628,13 +677,19 @@ public class Syntax_Analyzer {
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                         currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
+                    createParseNode("Declaration",null);
                     String dataType = type();
                     String variable = identifier();
                     symbolType.put(variable, dataType);
                     declaration(dataType);
+                    while (!currentParseNode.getType().equals("Body"))
+                        moveUpInParseTree();
                 }
                 else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
+                    createParseNode("Statement",null);
                     parseStatement();
+                    while (!currentParseNode.getType().equals("Body"))
+                        moveUpInParseTree();
                 }
                 else if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("break")) {
                     matchByValue( "break");
@@ -645,12 +700,17 @@ public class Syntax_Analyzer {
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
+                createParseNode("Intialization", null);
                 parseInitialization();
+                while (!currentParseNode.getType().equals("Body"))
+                    moveUpInParseTree();
             }
             else {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
         }
+        while (currentParseNode != parent)
+            moveUpInParseTree();
     }
 
     private void parseStatement() {
@@ -908,7 +968,8 @@ public class Syntax_Analyzer {
                 nestingLevel++;
             if(expectedType.equals("RIGHT_BRACE"))
                 nestingLevel--;
-
+            createParseNode(currentToken.getType(),currentToken.getValue());
+            moveUpInParseTree();
             advance();
         }
         else{
@@ -917,6 +978,8 @@ public class Syntax_Analyzer {
     }
     private void matchByValue(String value) {
         if (currentToken.getValue().equals(value)) {
+            createParseNode(currentToken.getType(),currentToken.getValue());
+            moveUpInParseTree();
             advance();
         }
         else{
