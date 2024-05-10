@@ -5,8 +5,7 @@ int main() {
     int arr[10];
     int sum = 0;
     for(int i = 0;i<10;i++){
-        scanf(num);
-        arr[i] = num;
+        scanf("Enter a number",num);
         sum += num;
     }
 

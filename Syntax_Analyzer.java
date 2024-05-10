@@ -63,6 +63,8 @@ public class Syntax_Analyzer {
 
                 String variable = identifier();
                 if(dataType.equals("int") && variable.equals("main")){
+                    matchByType("LEFT_PAREN");
+                    matchByType("RIGHT_PAREN");
                     parseMain();
                     while (!currentParseNode.getType().equals("Program")){
                         moveUpInParseTree();
@@ -116,8 +118,18 @@ public class Syntax_Analyzer {
         if (currentToken.getType().equals("SEMICOLON")) { //Declaration only
             matchByType("SEMICOLON");
             return;
-        } else if (currentToken.getType().equals("ASSIGN_OP")) { // Declaration with initialization
-            matchByType("ASSIGN_OP");
+        } else if (currentToken.getType().equals("ASSIGN_OP") || currentToken.getType().equals("ADD_ASSIGN") || currentToken.getType().equals("SUB_ASSIGN") || currentToken.getType().equals("MULTIPLY_ASSIGN") || currentToken.getType().equals("DIVIDE_ASSIGN")) { // Declaration with initialization
+            if(currentToken.getType().equals("ASSIGN_OP"))
+                matchByType("ASSIGN_OP");
+            if(currentToken.getType().equals("ADD_ASSIGN"))
+                matchByType("ADD_ASSIGN");
+            if(currentToken.getType().equals("SUB_ASSIGN"))
+                matchByType("SUB_ASSIGN");
+            if(currentToken.getType().equals("DIVIDE_ASSIGN"))
+                matchByType("DIVIDE_ASSIGN");
+            if(currentToken.getType().equals("ASSIGN_ASSIGN"))
+                matchByType("MULTIPLY_ASSIGN");
+
 
             if (tokenType.equalsIgnoreCase("char")) { // Declaration with char initialization
                 matchByType("CHAR");
@@ -418,7 +430,7 @@ public class Syntax_Analyzer {
                 } else if (currentToken.getType().equals("DECREMENT")) {
                     matchByType("DECREMENT");
                     matchByType("SEMICOLON");
-                } else if (currentToken.getType().equals("ASSIGN_OP")) {
+                } else if (currentToken.getType().equals("ASSIGN_OP") || currentToken.getType().equals("ADD_ASSIGN") || currentToken.getType().equals("SUB_ASSIGN") || currentToken.getType().equals("MULTIPLY_ASSIGN") || currentToken.getType().equals("DIVIDE_ASSIGN")) {
                     declaration(datatype);
                 }
             }
@@ -566,6 +578,11 @@ public class Syntax_Analyzer {
                     }
                     else {
                         throw new RuntimeException("Parsing failed. Unexpected token (Invalid return datatype): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                    }
+                }
+                else{
+                    if(currentToken.getType().equals("NUMBER")) {
+                        matchByType("NUMBER");
                     }
                 }
             }
@@ -738,6 +755,9 @@ public class Syntax_Analyzer {
         parseBody();
         if (currentToken.getValue().equals("return")){
             matchByValue("return");
+            if(currentToken.getType().equals("NUMBER")) {
+                matchByType("NUMBER");
+            }
             matchByType("SEMICOLON");
         }
         matchByType("RIGHT_BRACE");  // Expects a right brace token
@@ -756,6 +776,9 @@ public class Syntax_Analyzer {
         parseBody();
         if (currentToken.getValue().equals("return")){
             matchByValue("return");
+            if(currentToken.getType().equals("NUMBER")) {
+                matchByType("NUMBER");
+            }
             matchByType("SEMICOLON");
         }
         matchByValue("}");
@@ -826,6 +849,9 @@ public class Syntax_Analyzer {
         parseBody();
         if (currentToken.getValue().equals("return")){
             matchByValue("return");
+            if(currentToken.getType().equals("NUMBER")) {
+                matchByType("NUMBER");
+            }
             matchByType("SEMICOLON");
         }
         matchByType("RIGHT_BRACE");
@@ -839,6 +865,9 @@ public class Syntax_Analyzer {
                 parseBody();
                 if (currentToken.getValue().equals("return")){
                     matchByValue("return");
+                    if(currentToken.getType().equals("NUMBER")) {
+                        matchByType("NUMBER");
+                    }
                     matchByType("SEMICOLON");
                 }
                 matchByType("RIGHT_BRACE");
@@ -957,6 +986,9 @@ public class Syntax_Analyzer {
             parseBody();
             if (currentToken.getValue().equals("return")){
                 matchByValue("return");
+                if(currentToken.getType().equals("NUMBER")) {
+                    matchByType("NUMBER");
+                }
                 matchByType("SEMICOLON");
             }
         }

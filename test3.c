@@ -4,7 +4,7 @@ int sum (int a , int b){
     float s;
     return value;
 }
-int main{
+int main(){
     float d;
     int c = 5;
     int b = 10;

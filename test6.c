@@ -16,7 +16,7 @@ int sum (int a, int b){
     return value;
 }
 
-int main{
+int main(){
     float d;
     int c = 5;
     int b = 10;

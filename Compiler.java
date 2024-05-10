@@ -7,7 +7,7 @@ public class Compiler {
 
     public static void main(String [] args){
         Compiler compiler = new Compiler();
-        compiler.Compile("test6.c");
+        compiler.Compile("test2.c");
     }
 
 
