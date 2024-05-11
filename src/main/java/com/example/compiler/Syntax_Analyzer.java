@@ -9,16 +9,15 @@ public class Syntax_Analyzer {
     private List<Token> tokens;
     private ParseTreeNode currentParseNode;
     private HashMap<Integer,String> symbolTable;
-    private static HashMap<String,String> symbolType = new HashMap<>();
+    private  HashMap<String,String> symbolType = new HashMap<>();
     private HashMap<String,List<String>> funcParameters = new HashMap<>();
     private int currentTokenIndex;
     private Token currentToken;
     int nestingLevel = 0; // Start with 1 to account for the outermost block
-    static{
+
+    public Syntax_Analyzer(List<Token> tokens,HashMap<Integer,String> symbolTable) {
         symbolType.put("printf","void");
         symbolType.put("scanf","void");
-    }
-    public Syntax_Analyzer(List<Token> tokens,HashMap<Integer,String> symbolTable) {
         this.tokens = tokens;
         this.currentParseNode = null;
         this.symbolTable = symbolTable;
@@ -76,6 +75,9 @@ public class Syntax_Analyzer {
                     }
                 }
                 else {
+                    if (symbolType.get(variable) != null){
+                        throw new RuntimeException("Parsing failed. Unexpected token (Variable is already initialized): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                    }
                     symbolType.put(variable, dataType);
                     if (currentToken.getType().equals("LEFT_PAREN")) {
                         parseFunction(variable,dataType);
@@ -401,7 +403,8 @@ public class Syntax_Analyzer {
                     matchByType("IDENTIFIER");
                     matchByType("LEFT_PAREN");
                     while(!currentToken.getType().equals("RIGHT_PAREN")){
-                        matchByType("STRING_LITERAL");
+                        if(currentToken.getType().equals("STRING_LITERAL"))
+                            matchByType("STRING_LITERAL");
                         if (currentToken.getType().equals("COMMA")){
                             matchByType("COMMA");
                         }
