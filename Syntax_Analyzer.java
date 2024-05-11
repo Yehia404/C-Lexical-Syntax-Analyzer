@@ -43,7 +43,7 @@ public class Syntax_Analyzer {
                 break;
             }
             if(currentToken.getType().equals("PRE_PROCESSOR_PATTERN")){
-                createParseNode("PREPROCESSOR",null);
+                createParseNode("PREPROCESSOR","");
                 Preprocessor();
                 while (!currentParseNode.getType().equals("Program")){
                     moveUpInParseTree();
@@ -51,7 +51,7 @@ public class Syntax_Analyzer {
             }
 
             if (currentToken.getType().equals("KEYWORD")){
-                createParseNode("Declaration",null);
+                createParseNode("Declaration","");
                 String dataType;
                 if (currentToken.getValue().equalsIgnoreCase("void")){
                      dataType = "void";
@@ -83,7 +83,7 @@ public class Syntax_Analyzer {
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                createParseNode("INITIALIZATION",null);
+                createParseNode("INITIALIZATION","");
                 parseInitialization();
                 while (!currentParseNode.getType().equals("Program")){
                     moveUpInParseTree();
@@ -322,14 +322,14 @@ public class Syntax_Analyzer {
 
     private void parseMain(){
             matchByType("LEFT_BRACE");
-            createParseNode("Body",null);
+            createParseNode("Body","");
 
             while(nestingLevel>0){
 
                 if (currentToken.getType().equals("KEYWORD")){
                     if(currentToken.getValue().equals("return")){
                         moveUpInParseTree();
-                        createParseNode("Return",null);
+                        createParseNode("Return","");
                         matchByValue("return");
                         if(currentToken.getType().equals("NUMBER")) {
                             matchByType("NUMBER");
@@ -338,7 +338,7 @@ public class Syntax_Analyzer {
                     }
                     else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                             currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
-                        createParseNode("Declaration",null);
+                        createParseNode("Declaration","");
                         String dataType = type();
                         String variable = identifier();
                         symbolType.put(variable, dataType);
@@ -347,14 +347,14 @@ public class Syntax_Analyzer {
                             moveUpInParseTree();
                     }
                     else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
-                        createParseNode("Statement",null);
+                        createParseNode("Statement","");
                         parseStatement();
                         while (!currentParseNode.getType().equals("Body"))
                             moveUpInParseTree();
                     }
                 }
                 else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                    createParseNode("Intialization",null);
+                    createParseNode("Intialization","");
                     parseInitialization();
                     while (!currentParseNode.getType().equals("Body"))
                         moveUpInParseTree();
@@ -569,7 +569,7 @@ public class Syntax_Analyzer {
             moveUpInParseTree();
         }
         if(currentToken.getValue().equals("return")){
-            createParseNode("Return",null);
+            createParseNode("Return","");
             matchByValue("return");
             if(!functionType.equals("void")){
                 if(currentToken.getType().equals("IDENTIFIER")){
@@ -630,7 +630,7 @@ public class Syntax_Analyzer {
     }
 
     private void parseBody() {
-        createParseNode("Body",null);
+        createParseNode("Body","");
         ParseTreeNode parent = currentParseNode.getParent();
         while(!currentToken.getType().equals("RIGHT_BRACE") && !currentToken.getType().equals("EOF")){
             if (currentToken.getType().equals("KEYWORD")){
@@ -639,7 +639,7 @@ public class Syntax_Analyzer {
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                         currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
-                    createParseNode("Declaration",null);
+                    createParseNode("Declaration","");
                     String dataType = type();
                     String variable = identifier();
                     symbolType.put(variable, dataType);
@@ -648,7 +648,7 @@ public class Syntax_Analyzer {
                         moveUpInParseTree();
                 }
                 else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
-                    createParseNode("Statement",null);
+                    createParseNode("Statement","");
                     parseStatement();
                     while (!currentParseNode.getType().equals("Body"))
                         moveUpInParseTree();
@@ -666,7 +666,7 @@ public class Syntax_Analyzer {
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                createParseNode("Initialization", null);
+                createParseNode("Initialization", "");
                 parseInitialization();
                 while (!currentParseNode.getType().equals("Body"))
                     moveUpInParseTree();
@@ -679,7 +679,7 @@ public class Syntax_Analyzer {
             moveUpInParseTree();
     }
     private void parseCaseBody(){
-        createParseNode("Body",null);
+        createParseNode("Body","");
         ParseTreeNode parent = currentParseNode.getParent();
         while((!currentToken.getValue().equals("case") || !currentToken.getValue().equals("default") || !currentToken.getType().equals("RIGHT_BRACE"))  && !currentToken.getType().equals("EOF")){
             if(currentToken.getValue().equals("case") || currentToken.getValue().equals("default") || currentToken.getType().equals("RIGHT_BRACE"))
@@ -694,7 +694,7 @@ public class Syntax_Analyzer {
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                         currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
-                    createParseNode("Declaration",null);
+                    createParseNode("Declaration","");
                     String dataType = type();
                     String variable = identifier();
                     symbolType.put(variable, dataType);
@@ -703,7 +703,7 @@ public class Syntax_Analyzer {
                         moveUpInParseTree();
                 }
                 else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
-                    createParseNode("Statement",null);
+                    createParseNode("Statement","");
                     parseStatement();
                     while (!currentParseNode.getType().equals("Body"))
                         moveUpInParseTree();
@@ -717,7 +717,7 @@ public class Syntax_Analyzer {
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                createParseNode("Intialization", null);
+                createParseNode("Intialization", "");
                 parseInitialization();
                 while (!currentParseNode.getType().equals("Body"))
                     moveUpInParseTree();

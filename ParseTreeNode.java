@@ -1,5 +1,8 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class ParseTreeNode {
     private String type;
@@ -32,6 +35,38 @@ public class ParseTreeNode {
 
         for (ParseTreeNode child : node.getChildren()) {
             visualizeTree(child, depth + 1);
+        }
+    }
+
+    public void generateDotFile(String filename) {
+        StringBuilder dotContent = new StringBuilder();
+        dotContent.append("digraph ParseTree {\n");
+        generateDotContent(this, dotContent);
+        dotContent.append("}");
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            writer.write(dotContent.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void generateDotContent(ParseTreeNode node, StringBuilder dotContent) {
+        dotContent.append("  ")
+                .append(node.hashCode()) // Use the node's hash code as the unique identifier
+                .append(" [label=\"")
+                .append(node.getType())
+                .append(" ")
+                .append(node.getValue())
+                .append("\"];\n");
+
+        for (ParseTreeNode child : node.getChildren()) {
+            generateDotContent(child, dotContent);
+            dotContent.append("  ")
+                    .append(node.hashCode())
+                    .append(" -> ")
+                    .append(child.hashCode())
+                    .append(";\n");
         }
     }
 
