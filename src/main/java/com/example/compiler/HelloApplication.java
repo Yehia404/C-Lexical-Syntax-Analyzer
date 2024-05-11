@@ -27,12 +27,14 @@ public class HelloApplication extends Application {
         root.setStyle("-fx-background-color: #333;");
 
         MenuBar menuBar = new MenuBar();
-        menuBar.setStyle("-fx-background-color: #666;");
+        menuBar.setStyle("-fx-background-color: #666; -fx-text-fill: white;");
+        menuBar.setPrefHeight(25);
         // Run Button
         Button runButton = new Button("Run");
-        runButton.setStyle("-fx-background-color: #666;");
+        runButton.setPrefHeight(25);
+        runButton.setStyle("-fx-background-color: #666; -fx-text-fill: white;");
         runButton.setOnMouseEntered(e -> runButton.setStyle("-fx-background-color: #005e9e; -fx-text-fill: white;"));
-        runButton.setOnMouseExited(e -> runButton.setStyle("-fx-background-color: #007ACC; -fx-text-fill: white;"));
+        runButton.setOnMouseExited(e -> runButton.setStyle("-fx-background-color: #666; -fx-text-fill: white;"));
         runButton.setOnAction(event -> {
             run();
         });
@@ -53,6 +55,7 @@ public class HelloApplication extends Application {
 
         // Add components to the top of the root pane
         BorderPane topPane = new BorderPane();
+        topPane.setPrefHeight(25);
         topPane.setStyle("-fx-background-color: #666;");
         topPane.setLeft(menuBar);
         topPane.setRight(runButton);
@@ -82,7 +85,8 @@ public class HelloApplication extends Application {
         if(currentFile != null) {
             System.out.println(currentFile.getAbsolutePath());
             try {
-            compiler.compile(currentFile.getAbsolutePath());
+                saveContentToFile(currentFile);
+                compiler.compile(currentFile.getAbsolutePath());
             }catch (Exception e) {
                 showErrorAlert("An error occurred while compiling the file:\n" + e.getMessage());
             }
@@ -95,6 +99,7 @@ public class HelloApplication extends Application {
                 // Create the file
                 if (file.createNewFile()) {
                     saveContentToFile(file);
+                    currentFile = file;
                     try{
                     compiler.compile(file.getAbsolutePath());
                     } catch (Exception e) {
