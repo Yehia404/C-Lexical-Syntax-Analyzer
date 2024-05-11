@@ -24,6 +24,9 @@ public class Syntax_Analyzer {
         this.symbolTable = symbolTable;
         currentTokenIndex = 0;
         currentToken = tokens.get(0);
+        if (currentToken.getType().equals("EOF")){
+            throw new RuntimeException("Parsing failed. (File is Empty)");
+        }
     }
 
     private void createParseNode(String type, String value) {
@@ -148,6 +151,7 @@ public class Syntax_Analyzer {
                     matchByType("IDENTIFIER");
                     if (tokenType.equals(functionType)) {
                         matchByType("LEFT_PAREN");
+                        createParseNode("Parameters_List","");
                         List<String> parameters;
                         parameters = funcParameters.get(functionName);
                         int paramLength = parameters.size();
@@ -200,7 +204,7 @@ public class Syntax_Analyzer {
                         if (argumentCounter < paramLength || argumentCounter > paramLength) {
                             throw new RuntimeException("Parsing failed. Unexpected token (Invalid Number of arguments), " + "Line Number: " + currentToken.getLineNumber());
                         }
-
+                        moveUpInParseTree();
                         matchByType("RIGHT_PAREN");
                     }
                     else {
@@ -544,6 +548,9 @@ public class Syntax_Analyzer {
     private void parseNumber(String tokentype) {
         if(currentToken.getType().equals("IDENTIFIER")) {
             String tokenType = symbolType.get(currentToken.getValue());
+            if (tokenType == null){
+                throw new RuntimeException("Parsing failed. Unexpected token (Invalid Identifier): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+            }
             if (tokenType.equalsIgnoreCase("int")) {
                 matchByType("IDENTIFIER");
             } else if (tokenType.equalsIgnoreCase("float") || tokenType.equalsIgnoreCase("double")) {

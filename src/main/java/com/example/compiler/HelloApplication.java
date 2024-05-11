@@ -5,11 +5,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
 
 import java.io.*;
 import java.util.Random;
@@ -19,6 +19,7 @@ public class HelloApplication extends Application {
     private TextArea textArea;
     private File currentFile;
     Random random;
+
     @Override
     public void start(Stage primaryStage) {
         long seed = System.currentTimeMillis();
@@ -53,17 +54,42 @@ public class HelloApplication extends Application {
         textArea = new TextArea();
         textArea.setStyle("-fx-text-fill: white; -fx-control-inner-background: #333; -fx-font-size: 16px;");
 
-        // Add components to the top of the root pane
+// Add components to the top of the root pane
         BorderPane topPane = new BorderPane();
         topPane.setPrefHeight(25);
         topPane.setStyle("-fx-background-color: #666;");
         topPane.setLeft(menuBar);
         topPane.setRight(runButton);
         root.setTop(topPane);
-        root.setCenter(textArea);
+
+        // Add line numbers to the text area
+        VBox lineNumberContainer = new VBox();
+        lineNumberContainer.setStyle("-fx-background-color: #444;");
+        lineNumberContainer.setSpacing(8);
+
+        textArea.textProperty().addListener((observable, oldValue, newValue) -> {
+            lineNumberContainer.getChildren().clear();
+            String[] lines = newValue.split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                Label lineNumber = new Label(String.valueOf(i + 1));
+                lineNumber.setStyle("-fx-text-fill: white;");
+                lineNumberContainer.getChildren().add(lineNumber);
+            }
+        });
+
+        HBox textAreaContainer = new HBox(lineNumberContainer, textArea);
+        HBox.setHgrow(textArea, Priority.ALWAYS);
+        textAreaContainer.setFillHeight(true);
+
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setContent(textAreaContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+
+        root.setCenter(scrollPane);
 
         primaryStage.setScene(new Scene(root, 1000, 700));
-        primaryStage.setTitle("Text Editor - Dark Mode");
+        primaryStage.setTitle("C-Lexical-Syntax-Analyzer");
         primaryStage.show();
     }
 
