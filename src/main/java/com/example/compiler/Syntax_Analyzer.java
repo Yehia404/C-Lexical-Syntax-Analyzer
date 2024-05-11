@@ -214,7 +214,7 @@ public class Syntax_Analyzer {
 
 
             }
-            else if (currentToken.getType().equals("NUMBER") || currentToken.getType().equals("FLOAT_NUMBER")){ // Declaration with Number (Operations)
+            else if (currentToken.getType().equals("LEFT_PAREN") || currentToken.getType().equals("NUMBER") || currentToken.getType().equals("FLOAT_NUMBER")){ // Declaration with Number (Operations)
                 parseNumOperation(tokenType);
             }
             else {
@@ -488,6 +488,7 @@ public class Syntax_Analyzer {
     }
 
     private void parseNumOperation(String tokentype) {
+        createParseNode("Operation","");
         parseTerm(tokentype);
         while (currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
                 currentToken.getType().equals("DIV_OP") || currentToken.getType().equals("SUB_OP") ) {
@@ -495,6 +496,7 @@ public class Syntax_Analyzer {
             matchByValue(operator);
             parseTerm(tokentype);
         }
+        moveUpInParseTree();
     }
 
     private void parseTerm(String tokentype) {
@@ -563,11 +565,15 @@ public class Syntax_Analyzer {
     private void parseFunction(String functionName,String functionType)
     {
         matchByType("LEFT_PAREN");
+        ParseTreeNode parent = currentParseNode;
+        createParseNode("Parameters_List","");
         parseParameters(functionName);
+        while (currentParseNode != parent)
+            moveUpInParseTree();
         matchByType("RIGHT_PAREN");
         matchByType("LEFT_BRACE");
         parseBody();
-        while (!currentParseNode.getType().equals("Declaration")){
+        while (currentParseNode != parent){
             moveUpInParseTree();
         }
         if(currentToken.getValue().equals("return")){
@@ -598,7 +604,7 @@ public class Syntax_Analyzer {
     private void parseParameters(String functionName) {
         List<String> paramTypes = new ArrayList<>();
         while(!(currentToken.getType().equals("RIGHT_PAREN"))) {
-
+            createParseNode("Parameter","");
             String paramType = type();
             if (paramType == null) {
                 throw new RuntimeException("Parsing failed. Unexpected token (Expected a type for parameter): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
@@ -610,6 +616,7 @@ public class Syntax_Analyzer {
             symbolType.put(paramName,paramType);
             paramTypes.add(paramType);
             if (currentToken.getType().equals("COMMA")) {
+                moveUpInParseTree();
                 matchByType("COMMA");
                 if (currentToken.getType().equals("RIGHT_PAREN")) {
                     throw new RuntimeException("Parsing failed. Unexpected token (Trailing comma in parameter list): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
@@ -750,8 +757,12 @@ public class Syntax_Analyzer {
 
     private void parseWhileLoop() {
         matchByValue("while");  // Expects the "while" keyword
-        matchByType("LEFT_PAREN");  // Expects a left parenthesis token
+        matchByType("LEFT_PAREN"); // Expects a left parenthesis token
+        ParseTreeNode parent = currentParseNode;
+        createParseNode("Condition","");
         parseCondition();                                         // Parses the condition expression
+        while(currentParseNode!= parent)
+            moveUpInParseTree();
         matchByType("RIGHT_PAREN");  // Expects a right parenthesis token
         matchByType("LEFT_BRACE");  // Expects a left brace token
         parseBody();
@@ -768,11 +779,22 @@ public class Syntax_Analyzer {
     private void parseForLoop() {
         matchByValue("for");
         matchByValue("(");
+        ParseTreeNode parent = currentParseNode; //Statement
+        createParseNode("For_Condition","");
+        ParseTreeNode parent1 = currentParseNode; //For Condition
+        createParseNode("Declaration","");
         parseForInit();
+        moveUpInParseTree();
         matchByValue(";");
+        createParseNode("Condition","");
         parseCondition();
+        moveUpInParseTree();
         matchByValue(";");
+        createParseNode("Increment_Rule","");
         parseUpdate();
+        moveUpInParseTree();
+        while(currentParseNode!=parent)
+            moveUpInParseTree();
         matchByValue(")");
         matchByValue("{");
         parseBody();
@@ -845,7 +867,9 @@ public class Syntax_Analyzer {
     private void parseIfStatement() {
         matchByValue("if");
         matchByValue("(");
+        createParseNode("Condition","");
         parseCondition();
+        moveUpInParseTree();
         matchByValue(")");
         matchByType("LEFT_BRACE");
         parseBody();
@@ -858,6 +882,7 @@ public class Syntax_Analyzer {
         }
         matchByType("RIGHT_BRACE");
         if (currentToken.getValue().equals("else")) {
+            createParseNode("Else-Part","");
             matchByValue("else");
             if (currentToken.getValue().equals("if")) {
                 // Parse else if
@@ -957,6 +982,7 @@ public class Syntax_Analyzer {
     private void detectSwitchCaseInsideBlock(String type) {
         // Match the 'case' keyword
         while(!(currentToken.getValue().equals("}") || currentToken.getValue().equals("default") || currentToken.getValue().equals("EOF "))) {
+            createParseNode("Case-Part","");
             matchByValue("case");
 
 
@@ -979,9 +1005,11 @@ public class Syntax_Analyzer {
 //                // Match the semicolon after 'break'
 //                matchByType("SEMICOLON");
 //            }
+            moveUpInParseTree();
         }
         if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("default")) {
             // Match the 'default' keyword
+            createParseNode("Default-Part","");
             matchByValue("default");
             // Match the colon after 'default'
             matchByType("COLON");
@@ -993,6 +1021,7 @@ public class Syntax_Analyzer {
                 }
                 matchByType("SEMICOLON");
             }
+            moveUpInParseTree();
         }
     }
 
