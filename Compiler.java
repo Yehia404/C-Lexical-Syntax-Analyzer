@@ -7,7 +7,7 @@ public class Compiler {
 
     public static void main(String [] args){
         Compiler compiler = new Compiler();
-        compiler.Compile("test3.c");
+        compiler.Compile("test8.c");
     }
 
 
@@ -15,5 +15,7 @@ public class Compiler {
         scanner.lexicalAnalyze(sourceCodeFile);
         parser = new Syntax_Analyzer(scanner.getTokens(),scanner.getSymbolTable());
         parser.parse();
+        parser.root.printTree(parser.root);
+
     }
 }

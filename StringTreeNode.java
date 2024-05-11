@@ -1,31 +1,51 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public class StringTreeNode {
-    private StringTreeNode parent;
-    private String text;
-    private List<StringTreeNode> children;
-
-    public StringTreeNode getParent() {
-        return parent;
+    private Token data;
+     StringTreeNode sibling;
+     StringTreeNode child;
+    public StringTreeNode(Token data){
+        this.data = data;
+        sibling = null;
+        child = null;
+    }
+    public Token getData() {
+        return data;
     }
 
-    public void setParent(StringTreeNode parent) {
-        this.parent = parent;
+    public void setData(Token data) {
+        this.data = data;
     }
 
-    public String getText() {
-        return text;
+    public StringTreeNode getChild() {
+        return child;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void setChild(StringTreeNode child) {
+        this.child = child;
     }
 
-    public List<StringTreeNode> getChildren() {
-        return children;
+    public StringTreeNode getSibling() {
+        return sibling;
     }
 
-    public void setChildren(List<StringTreeNode> children) {
-        this.children = children;
+    public void setSibling(StringTreeNode sibling) {
+        this.sibling = sibling;
     }
+    public void printTree(StringTreeNode x) {
+        if (x == null) {
+            return; // Base case: If the node is null, return
+        }
+
+        // Print data of the current node
+        System.out.println(x.getData());
+
+        // Recursively print the child nodes
+        printTree(x.getChild());
+
+        // Recursively print the sibling nodes
+        printTree(x.getSibling());
+    }
+
 }

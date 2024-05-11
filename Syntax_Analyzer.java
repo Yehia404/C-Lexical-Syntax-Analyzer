@@ -9,6 +9,8 @@ public class Syntax_Analyzer {
     private HashMap<String,String> symbolType = new HashMap<>();
     private HashMap<String,List<String>> funcParameters = new HashMap<>();
     private int currentTokenIndex;
+    private StringTreeAsTreeForTreeLayout tree;
+    StringTreeNode root;
     private Token currentToken;
     int nestingLevel = 0; // Start with 1 to account for the outermost block
 
@@ -20,42 +22,85 @@ public class Syntax_Analyzer {
     }
 //    const/static/enum/typedef/struct
     public void parse() {
+        Token program = new Token("program node",-12,"program");
+        root = new StringTreeNode(program);
+
         while (!currentToken.getType().equals("EOF")) {
+            StringTreeNode sub = null;
             if (currentToken.getType().equals("EOF")) {
                 break;
             }
-            if(currentToken.getType().equals("PRE_PROCESSOR_PATTERN")){
-                Preprocessor();
-            }
 
+            if(currentToken.getType().equals("PRE_PROCESSOR_PATTERN")){
+                Token preProc = new Token("program node",-2,"pre processor");
+                sub = new StringTreeNode(preProc);
+                StringTreeNode temp = new StringTreeNode(new Token("dummy node", -1, "dummy"));;
+                sub.child = temp;
+                Preprocessor(temp);
+                if (root.child == null) {
+                    root.child = sub; // Assign sub to root.child if it's the first node
+                }
+                sub = sub.sibling;
+            }
             if (currentToken.getType().equals("KEYWORD")){
                 String dataType;
                 if (currentToken.getValue().equalsIgnoreCase("void")){
                      dataType = "void";
-                     matchByType("KEYWORD");
+                     matchByType("KEYWORD",sub);
+
                 }
                 else{
-                     dataType = type();
+                    Token preProc = new Token("program node",-2,"type");
+                    sub = new StringTreeNode(preProc);
+                    sub = sub.child;
+                    StringTreeNode temp = sub;
+                    dataType = type(sub);
+                    sub = temp.sibling;
                 }
-
-                String variable = identifier();
+                Token preProc = new Token("program node",-2,"identifier");
+                sub = new StringTreeNode(preProc);
+                sub = sub.child;
+                StringTreeNode temp = sub;
+                String variable = identifier(sub);
+                sub = temp.sibling;
                 if(dataType.equals("int") && variable.equals("main")){
-                    parseMain();
+                    Token main = new Token("program node",-2,"main");
+                    sub = new StringTreeNode(main);
+                    sub = sub.child;
+                    temp = sub;
+                    parseMain(sub);
+                    sub = temp.sibling;
                 }
                 else {
                     symbolType.put(variable, dataType);
                     if (currentToken.getType().equals("LEFT_PAREN")) {
-                        parseFunction(variable,dataType);
+                        Token main = new Token("program node",-2,"function body");
+                        sub = new StringTreeNode(main);
+                        sub = sub.child;
+                        temp = sub;
+                        parseFunction(variable,dataType, sub);
+                        sub = temp.sibling;
                     } else {
-                        declaration(dataType);
+                        Token main = new Token("program node",-2,"declaration");
+                        sub = new StringTreeNode(main);
+                        sub = sub.child;
+                        temp = sub;
+                        declaration(dataType, sub);
+                        sub = temp.sibling;
                     }
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                parseInitialization();
+                Token main = new Token("program node",-2,"declaration");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                StringTreeNode temp = sub;
+                parseInitialization(sub);
+                sub = temp.sibling;
             }
+
             else{
-                throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                //throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
         }
 
@@ -77,15 +122,15 @@ public class Syntax_Analyzer {
         }
     }
 
-    private void declaration(String tokenType) {
+    private void declaration(String tokenType, StringTreeNode sub) {
         if (currentToken.getType().equals("SEMICOLON")) { //Declaration only
-            matchByType("SEMICOLON");
+            matchByType("SEMICOLON", sub);
             return;
         } else if (currentToken.getType().equals("ASSIGN_OP")) { // Declaration with initialization
-            matchByType("ASSIGN_OP");
+            matchByType("ASSIGN_OP", sub);
 
             if (tokenType.equalsIgnoreCase("char")) { // Declaration with char initialization
-                matchByType("CHAR");
+                matchByType("CHAR", sub);
             }
             else if (currentToken.getType().equals("IDENTIFIER")){ // Declaration with function call
                 String functionName = currentToken.getValue() ;
@@ -93,10 +138,10 @@ public class Syntax_Analyzer {
                 if (functionType == null){
                     throw new RuntimeException("Parsing failed. Unexpected token (Variable or function is not defined): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
-                matchByType("IDENTIFIER");
+                matchByType("IDENTIFIER", sub);
                 if (currentToken.getType().equals("LEFT_PAREN")){
                     if (tokenType.equals(functionType)) {
-                        matchByType("LEFT_PAREN");
+                        matchByType("LEFT_PAREN", sub);
                         List<String> parameters;
                         parameters = funcParameters.get(functionName);
                         int paramLength = parameters.size();
@@ -105,7 +150,7 @@ public class Syntax_Analyzer {
 
                         while (!(currentToken.getType().equals("RIGHT_PAREN"))) {
 
-                            String paramName = identifier();
+                            String paramName = identifier(sub);
                             if (paramName == null) {
                                 throw new RuntimeException("Parsing failed. Unexpected token (Expected an argument name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                             }
@@ -121,7 +166,7 @@ public class Syntax_Analyzer {
                             argumentCounter++;
 
                             if (currentToken.getType().equals("COMMA")) {
-                                matchByType("COMMA");
+                                matchByType("COMMA", sub);
                                 if (currentToken.getType().equals("RIGHT_PAREN")) {
                                     throw new RuntimeException("Parsing failed. Unexpected token (Trailing comma in argument list): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                                 }
@@ -132,7 +177,7 @@ public class Syntax_Analyzer {
                             throw new RuntimeException("Parsing failed. Unexpected token (Invalid Number of arguments), " + "Line Number: " + currentToken.getLineNumber());
                         }
 
-                        matchByType("RIGHT_PAREN");
+                        matchByType("RIGHT_PAREN", sub);
                     }
                     else {
                         throw new RuntimeException("Parsing failed. Unexpected token (Function data type is different): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
@@ -140,20 +185,20 @@ public class Syntax_Analyzer {
                 }
                 else{
                     retract();
-                    parseNumOperation(tokenType);
+                    parseNumOperation(tokenType, sub);
                 }
 
 
             }
             else if (currentToken.getType().equals("NUMBER") || currentToken.getType().equals("FLOAT_NUMBER")){ // Declaration with Number (Operations)
-                parseNumOperation(tokenType);
+                parseNumOperation(tokenType, sub);
             }
             else {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
 
         } else if (currentToken.getType().equals("LEFT_BRACKET")) { // Array Declaration
-            matchByType("LEFT_BRACKET");
+            matchByType("LEFT_BRACKET",sub);
             int size = Integer.parseInt(currentToken.getValue());
             if (currentToken.getType().equals("NUMBER")) {
 
@@ -162,59 +207,81 @@ public class Syntax_Analyzer {
                     throw new RuntimeException("Parsing failed. Unexpected token (Negative number in array declaration): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
 
-                matchByType("NUMBER");
+                matchByType("NUMBER",sub);
             }
-            matchByType("RIGHT_BRACKET");
+            matchByType("RIGHT_BRACKET",sub);
             if (currentToken.getType().equals("SEMICOLON")){
-                matchByType("SEMICOLON");
+                matchByType("SEMICOLON",sub);
                 return;
             }
             else if(currentToken.getType().equals("ASSIGN_OP")){
-                matchByType("ASSIGN_OP");
-                matchByType("LEFT_BRACE");
-                matchArrayListContents(tokenType,size);
-                matchByType("RIGHT_BRACE");
+                matchByType("ASSIGN_OP",sub);
+                matchByType("LEFT_BRACE",sub);
+
+                Token main = new Token("program node",-2,"Array contents");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                StringTreeNode temp = sub;
+                matchArrayListContents(tokenType,size,sub);
+                sub = temp.sibling;
+
+                matchByType("RIGHT_BRACE",sub);
             }
 
         } else{
             throw new RuntimeException("Parsing failed. Unexpected token (Missing Semicolon): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
         }
-        matchByType("SEMICOLON");
+        matchByType("SEMICOLON",sub);
     }
 
-    private void parseMain(){
-            matchByType("LEFT_BRACE");
+    private void parseMain(StringTreeNode sub){
+            matchByType("LEFT_BRACE",sub);
 
             while(nestingLevel>0){
 
                 if (currentToken.getType().equals("KEYWORD")){
                     if(currentToken.getValue().equals("return")){
-                        matchByValue("return");
+                        matchByValue("return",sub);
                         if(currentToken.getType().equals("NUMBER")) {
-                            matchByType("NUMBER");
+                            matchByType("NUMBER",sub);
                         }
-                        matchByType("SEMICOLON");
+                        matchByType("SEMICOLON",sub);
                     }
                     else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                             currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
-                        String dataType = type();
-                        String variable = identifier();
+                        String dataType = type(sub);
+                        String variable = identifier(sub);
                         symbolType.put(variable, dataType);
-                        declaration(dataType);
+                        Token main = new Token("program node",-2,"declaration");
+                        sub = new StringTreeNode(main);
+                        sub = sub.child;
+                        StringTreeNode temp = sub;
+                        declaration(dataType, sub);
+                        sub = temp.sibling;
                     }
                     else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
-                        parseStatement();
+                        Token main = new Token("program node",-2,"Statement");
+                        sub = new StringTreeNode(main);
+                        sub = sub.child;
+                        StringTreeNode temp = sub;
+                        parseStatement(sub);
+                        sub = temp.sibling;
                     }
                 }
                 else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                    parseInitialization();
+                    Token main = new Token("program node",-2,"initialization");
+                    sub = new StringTreeNode(main);
+                    sub = sub.child;
+                    StringTreeNode temp = sub;
+                    parseInitialization(sub);
+                    sub = temp.sibling;
                 }
                 else{
                     throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
 
                 if(currentToken.getType().equals("RIGHT_BRACE")){
-                    matchByType("RIGHT_BRACE");
+                    matchByType("RIGHT_BRACE",sub);
                 }
                 else if (currentToken.getType().equals("EOF")){
                     throw new RuntimeException("Parsing failed. Unexpected token (Missing Brace): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
@@ -222,14 +289,14 @@ public class Syntax_Analyzer {
             }
     }
 
-    private void parseInitialization(){
+    private void parseInitialization(StringTreeNode sub){
         boolean pre = false;
         if(currentToken.getType().equals("INCREMENT")){
-            matchByType("INCREMENT");
+            matchByType("INCREMENT",sub);
             pre = true;
         }
         if(currentToken.getType().equals("DECREMENT")){
-            matchByType("DECREMENT");
+            matchByType("DECREMENT",sub);
             pre=true;
         }
         String datatype;
@@ -238,26 +305,31 @@ public class Syntax_Analyzer {
             if (datatype == null){
                 throw new RuntimeException("Parsing failed. Unexpected token (Variable not defined): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
-            matchByType("IDENTIFIER");
+            matchByType("IDENTIFIER",sub);
             if(pre){
-                matchByType("SEMICOLON");
+                matchByType("SEMICOLON",sub);
             }
             else if(currentToken.getType().equals("INCREMENT")){
-                matchByType("INCREMENT");
-                matchByType("SEMICOLON");
+                matchByType("INCREMENT",sub);
+                matchByType("SEMICOLON",sub);
             }
             else if(currentToken.getType().equals("DECREMENT")){
-                matchByType("DECREMENT");
-                matchByType("SEMICOLON");
+                matchByType("DECREMENT",sub);
+                matchByType("SEMICOLON",sub);
             }
             else if (currentToken.getType().equals("ASSIGN_OP")) {
-                declaration(datatype);
+                Token main = new Token("program node",-2,"declaration");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                StringTreeNode temp = sub;
+                declaration(datatype, sub);
+                sub = temp.sibling;
             }
 
         }
     }
 
-    private String type() {
+    private String type(StringTreeNode sub) {
         String tokenType = currentToken.getValue();
         if (currentToken.getValue().equalsIgnoreCase("int") ||
                 currentToken.getValue().equalsIgnoreCase("float") ||
@@ -265,35 +337,45 @@ public class Syntax_Analyzer {
                 currentToken.getValue().equalsIgnoreCase("double") ||
                 currentToken.getValue().equalsIgnoreCase("long")||
                 currentToken.getValue().equalsIgnoreCase("short")){
-            advance();
+            matchByValue(currentToken.getValue(),sub);
             return tokenType;
         }
         return null;
     }
 
 
-    private String identifier() {
+    private String identifier(StringTreeNode sub) {
         String identifier = currentToken.getValue();
         if (currentToken.getType().equals("IDENTIFIER")) {
-            advance();
+            matchByValue(currentToken.getValue(),sub);
             return identifier;
         }
         return null;
     }
 
-    private void matchArrayListContents(String tokentype, int size) {
+    private void matchArrayListContents(String tokentype, int size, StringTreeNode sub) {
         int count = 0;
 
-
-        parseNumOperation(tokentype);
+        Token main = new Token("program node",-2,"Num operation");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseNumOperation(tokentype, sub);
+        sub = temp.sibling;
 
         count++;
 
 
         while (currentToken.getType().equals("COMMA")) {
-            matchByType("COMMA");
+            matchByType("COMMA", sub);
 
-            parseNumOperation(tokentype);
+            main = new Token("program node",-2,"Num operation");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            temp = sub;
+            parseNumOperation(tokentype, sub);
+            sub = temp.sibling;
+
 
             count++;
         }
@@ -304,40 +386,94 @@ public class Syntax_Analyzer {
         }
     }
 
-    private void parseNumOperation(String tokentype) {
-        parseTerm(tokentype);
+    private void parseNumOperation(String tokentype, StringTreeNode sub) {
+        Token main = new Token("program node",-2,"Term");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseTerm(tokentype, sub);
+        sub = temp.sibling;
+
         while (currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
                 currentToken.getType().equals("DIV_OP") || currentToken.getType().equals("SUB_OP") ) {
             String operator = currentToken.getValue();
-            matchByValue(operator);
-            parseTerm(tokentype);
+            matchByValue(operator, sub);
+
+            main = new Token("program node",-2,"Term");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            temp = sub;
+            parseTerm(tokentype, sub);
+            sub = temp.sibling;
+
         }
     }
 
-    private void parseTerm(String tokentype) {
-        parseFactor(tokentype);
+    private void parseTerm(String tokentype, StringTreeNode sub) {
+        Token main = new Token("program node",-2,"Term");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseFactor(tokentype, sub);
+        sub = temp.sibling;
+
         while ((currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
                 currentToken.getType().equals("DIV_OP") || currentToken.getType().equals("SUB_OP") ) && !(currentToken.getType().equals("SEMICOLON"))) {
             String operator = currentToken.getValue();
             if (operator.equals("+")) {
-                matchByType("ADD_OP");
-                parseFactor(tokentype);
+                matchByType("ADD_OP", sub);
+
+                main = new Token("program node",-2,"Term");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                temp = sub;
+                parseFactor(tokentype, sub);
+                sub = temp.sibling;
+
             }
             else if (operator.equals("-")) {
-                matchByType("SUB_OP");
-                parseFactor(tokentype);
+                matchByType("SUB_OP", sub);
+
+                main = new Token("program node",-2,"Term");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                temp = sub;
+                parseFactor(tokentype, sub);
+                sub = temp.sibling;
+
             }
             else if (operator.equals("*")) {
-                matchByType("MUL_OP");
-                parseFactor(tokentype);
+                matchByType("MUL_OP", sub);
+
+                main = new Token("program node",-2,"Term");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                temp = sub;
+                parseFactor(tokentype, sub);
+                sub = temp.sibling;
+
             }
             else if (operator.equals("/")) {
-                matchByType("DIV_OP");
-                parseFactor(tokentype);
+                matchByType("DIV_OP", sub);
+
+                main = new Token("program node",-2,"Term");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                temp = sub;
+                parseFactor(tokentype, sub);
+                sub = temp.sibling;
+
             }
             else if (operator.equals("%")) {
-                matchByType("MOD_OP");
-                parseFactor(tokentype);
+                matchByType("MOD_OP", sub);
+
+                main = new Token("program node",-2,"Term");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                temp = sub;
+                parseFactor(tokentype, sub);
+                sub = temp.sibling;
+
             }
             else {
                 break;
@@ -345,18 +481,18 @@ public class Syntax_Analyzer {
         }
     }
 
-    private void parseFactor(String tokentype) {
+    private void parseFactor(String tokentype, StringTreeNode sub) {
         if (currentToken.getType().equals("LEFT_PAREN")) {
-            matchByType("LEFT_PAREN");
-            parseNumOperation(tokentype);
-            matchByType("RIGHT_PAREN");
+            matchByType("LEFT_PAREN", sub);
+            parseNumOperation(tokentype, sub);
+            matchByType("RIGHT_PAREN", sub);
         } else {
-            parseNumber(tokentype);
+            parseNumber(tokentype, sub);
         }
     }
 
 
-    private void parseNumber(String tokentype) {
+    private void parseNumber(String tokentype, StringTreeNode sub) {
         if(currentToken.getType().equals("IDENTIFIER")) {
             String tokenType = symbolType.get(currentToken.getValue());
             if (tokenType.equalsIgnoreCase("int")) {
@@ -369,55 +505,66 @@ public class Syntax_Analyzer {
         }
         else{
             if (tokentype.equalsIgnoreCase("int") || tokentype.equalsIgnoreCase("long") || tokentype.equalsIgnoreCase("short")) {
-                matchByType("NUMBER");
+                matchByType("NUMBER", sub);
             } else if (tokentype.equalsIgnoreCase("float") || tokentype.equalsIgnoreCase("double")) {
-                matchByType("FLOAT_NUMBER");
+                matchByType("FLOAT_NUMBER", sub);
             }
         }
     }
 
 
-    private void parseFunction(String functionName,String functionType)
+    private void parseFunction(String functionName, String functionType, StringTreeNode sub)
     {
-        matchByType("LEFT_PAREN");
-        parseParameters(functionName);
-        matchByType("RIGHT_PAREN");
-        matchByType("LEFT_BRACE");
-        parseBody();
+        matchByType("LEFT_PAREN",sub);
+        Token main = new Token("program node",-2,"Parameters");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseParameters(functionName, sub);
+        sub = temp.sibling;
+        matchByType("RIGHT_PAREN",sub);
+        matchByType("LEFT_BRACE",sub);
+        matchByType("LEFT_PAREN",sub);
+        main = new Token("program node",-2,"Body");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        temp = sub;
+        parseBody(sub);
+        sub = temp.sibling;
         if(currentToken.getValue().equals("return")){
-            matchByValue("return");
+            matchByValue("return",sub);
             if(!functionType.equals("void")){
                 if(currentToken.getType().equals("IDENTIFIER")){
                     if(symbolType.get(currentToken.getValue()).equals(functionType)) {
-                        matchByType("IDENTIFIER");
+                        matchByType("IDENTIFIER",sub);
                     }
                     else {
                         throw new RuntimeException("Parsing failed. Unexpected token (Invalid return datatype): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                     }
                 }
             }
-            matchByType("SEMICOLON");
+            matchByType("SEMICOLON", sub);
         }
-        matchByType("RIGHT_BRACE");
+        matchByType("RIGHT_BRACE", sub);
 
     }
 
-    private void parseParameters(String functionName) {
+    private void parseParameters(String functionName, StringTreeNode sub) {
         List<String> paramTypes = new ArrayList<>();
         while(!(currentToken.getType().equals("RIGHT_PAREN"))) {
 
-            String paramType = type();
+            String paramType = type(sub);
             if (paramType == null) {
                 throw new RuntimeException("Parsing failed. Unexpected token (Expected a type for parameter): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
-            String paramName = identifier();
+            String paramName = identifier(sub);
             if (paramName == null) {
                 throw new RuntimeException("Parsing failed. Unexpected token (Expected a parameter name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
             symbolType.put(paramName,paramType);
             paramTypes.add(paramType);
             if (currentToken.getType().equals("COMMA")) {
-                matchByType("COMMA");
+                matchByType("COMMA", sub);
                 if (currentToken.getType().equals("RIGHT_PAREN")) {
                     throw new RuntimeException("Parsing failed. Unexpected token (Trailing comma in parameter list): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
@@ -427,17 +574,18 @@ public class Syntax_Analyzer {
         funcParameters.put(functionName,paramTypes);
 
     }
-    private void Preprocessor(){
-        matchByType("PRE_PROCESSOR_PATTERN");  //matching
-        matchByType("LESS_THAN");
-        matchByType("IDENTIFIER");
+    private void Preprocessor(StringTreeNode sub){
+        matchByType("PRE_PROCESSOR_PATTERN", sub);  //matching
+        matchByType("LESS_THAN", sub);
+        matchByType("IDENTIFIER", sub);
+
         if(currentToken.getValue().equals(".")) {
-            matchByType("DOT");
-            matchByType("IDENTIFIER");
+            matchByType("DOT",sub);
+            matchByType("IDENTIFIER", sub);
         }
-        matchByType("GREATER_THAN");
+        matchByType("GREATER_THAN", sub);
     }
-    private void parseBody() {
+    private void parseBody(StringTreeNode sub) {
 
         while(!currentToken.getType().equals("RIGHT_BRACE") && !currentToken.getType().equals("EOF")){
             if (currentToken.getType().equals("KEYWORD")){
@@ -446,66 +594,92 @@ public class Syntax_Analyzer {
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                         currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
-                    String dataType = type();
-                    String variable = identifier();
+                    String dataType = type(sub);
+                    String variable = identifier(sub);
                     symbolType.put(variable, dataType);
-                    declaration(dataType);
+                    declaration(dataType, sub);
                 }
                 else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
-                        parseStatement();
+                    Token main = new Token("program node",-2,"Statement");
+                    sub = new StringTreeNode(main);
+                    sub = sub.child;
+                    StringTreeNode temp = sub;
+                    parseStatement(sub);
+                    sub = temp.sibling;
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("break")) {
-                    matchByValue( "break");
-                    matchByType("SEMICOLON");
+                    matchByValue( "break",sub);
+                    matchByType("SEMICOLON",sub);
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("continue")) {
-                    matchByValue( "continue");
-                    matchByType("SEMICOLON");
+                    matchByValue( "continue",sub);
+                    matchByType("SEMICOLON",sub);
                 }
                 else{
                     throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                parseInitialization();
+                Token main = new Token("program node",-2,"Statement");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                StringTreeNode temp = sub;
+                parseInitialization(sub);
+                sub = temp.sibling;
             }
             else {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
         }
     }
-    private void parseCaseBody(){
+    private void parseCaseBody(StringTreeNode sub){
         while((!currentToken.getValue().equals("case") || !currentToken.getValue().equals("default") || !currentToken.getType().equals("RIGHT_BRACE"))  && !currentToken.getType().equals("EOF")){
             if(currentToken.getValue().equals("case") || currentToken.getValue().equals("default") || currentToken.getType().equals("RIGHT_BRACE"))
                 break;
             else if (currentToken.getType().equals("KEYWORD")){
                 if(currentToken.getValue().equals("return")){
-                    matchByValue("return");
+                    matchByValue("return", sub);
                     if(currentToken.getType().equals("NUMBER")) {
-                        matchByType("NUMBER");
+                        matchByType("NUMBER", sub);
                     }
-                    matchByType("SEMICOLON");
+                    matchByType("SEMICOLON", sub);
                 }
                 else if (currentToken.getValue().equalsIgnoreCase("int") || currentToken.getValue().equalsIgnoreCase("float") || currentToken.getValue().equalsIgnoreCase("char") ||
                         currentToken.getValue().equalsIgnoreCase("double") || currentToken.getValue().equalsIgnoreCase("long")|| currentToken.getValue().equalsIgnoreCase("short")){
-                    String dataType = type();
-                    String variable = identifier();
+                    String dataType = type(sub);
+                    String variable = identifier(sub);
                     symbolType.put(variable, dataType);
-                    declaration(dataType);
+
+                    Token main = new Token("program node",-2,"If Statement");
+                    sub = new StringTreeNode(main);
+                    sub = sub.child;
+                    StringTreeNode temp = sub;
+                    declaration(dataType, sub);
+                    sub = temp.sibling;
                 }
                 else if (currentToken.getValue().equals("if") || currentToken.getValue().equals("for") || currentToken.getValue().equals("while") || currentToken.getValue().equals("switch")){
-                    parseStatement();
+                    Token main = new Token("program node",-2,"If Statement");
+                    sub = new StringTreeNode(main);
+                    sub = sub.child;
+                    StringTreeNode temp = sub;
+                    parseStatement(sub);
+                    sub = temp.sibling;
                 }
                 else if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("break")) {
-                    matchByValue( "break");
-                    matchByType("SEMICOLON");
+                    matchByValue( "break", sub);
+                    matchByType("SEMICOLON", sub);
                 }
                 else{
                     throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                parseInitialization();
+                Token main = new Token("program node",-2,"If Statement");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                StringTreeNode temp = sub;
+                parseInitialization(sub);
+                sub = temp.sibling;
             }
             else {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
@@ -513,88 +687,156 @@ public class Syntax_Analyzer {
         }
     }
 
-    private void parseStatement() {
+    private void parseStatement(StringTreeNode sub) {
         if (currentToken.getValue().equals("if")) {
-            parseIfStatement();
+            Token main = new Token("program node",-2,"If Statement");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            StringTreeNode temp = sub;
+            parseIfStatement(sub);
+            sub = temp.sibling;
         }
         else if(currentToken.getValue().equals("switch")){
             // Parse other types of statements
-            ParseSwitchCaseDeclaration();
+            Token main = new Token("program node",-2,"Switch Statement");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            StringTreeNode temp = sub;
+            ParseSwitchCaseDeclaration(sub);
+            sub = temp.sibling;
         }
         else if(currentToken.getValue().equals("for")) {
-            parseForLoop();
+            Token main = new Token("program node",-2,"For loop");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            StringTreeNode temp = sub;
+            parseForLoop(sub);
+            sub = temp.sibling;
         }
         else if(currentToken.getValue().equals("while")){
-            parseWhileLoop();
+            Token main = new Token("program node",-2,"While loop");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            StringTreeNode temp = sub;
+            parseWhileLoop(sub);
+            sub = temp.sibling;
         }
     }
-
-    private void parseWhileLoop() {
-        matchByValue("while");  // Expects the "while" keyword
-        matchByType("LEFT_PAREN");  // Expects a left parenthesis token
-        parseCondition();                                         // Parses the condition expression
-        matchByType("RIGHT_PAREN");  // Expects a right parenthesis token
-        matchByType("LEFT_BRACE");  // Expects a left brace token
-        parseBody();
+    private void parseWhileLoop(StringTreeNode sub) {
+        matchByValue("while",sub);  // Expects the "while" keyword
+        matchByType("LEFT_PAREN",sub);
+        Token main = new Token("program node",-2,"Condition");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseCondition(sub);                                         // Parses the condition expression
+        sub = temp.sibling;
+        matchByType("RIGHT_PAREN", sub);  // Expects a right parenthesis token
+        matchByType("LEFT_BRACE", sub);  // Expects a left brace token
+        main = new Token("program node",-2,"Body");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        temp = sub;
+        parseBody(sub);
+        sub = temp.sibling;
         if (currentToken.getValue().equals("return")){
-            matchByValue("return");
-            matchByType("SEMICOLON");
+            matchByValue("return",sub);
+            matchByType("SEMICOLON",sub);
         }
-        matchByType("RIGHT_BRACE");  // Expects a right brace token
+        matchByType("RIGHT_BRACE",sub);  // Expects a right brace token
     }
 
-    private void parseForLoop() {
-        matchByValue("for");
-        matchByValue("(");
-        parseForInit();
-        matchByValue(";");
-        parseCondition();
-        matchByValue(";");
-        parseUpdate();
-        matchByValue(")");
-        matchByValue("{");
-        parseBody();
+    private void parseForLoop(StringTreeNode sub) {
+        matchByValue("for",sub);
+        matchByValue("(",sub);
+
+        Token main = new Token("program node",-2,"For Initialization");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseForInit(sub);
+        sub = temp.sibling;
+
+        matchByValue(";",sub);
+
+        main = new Token("program node",-2,"Condition");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        temp = sub;
+        parseCondition(sub);
+        sub = temp.sibling;
+
+        matchByValue(";",sub);
+
+        main = new Token("program node",-2,"Update");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        temp = sub;
+        parseUpdate(sub);
+        sub = temp.sibling;
+
+        matchByValue(")",sub);
+        matchByValue("{",sub);
+
+        main = new Token("program node",-2,"Body");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        temp = sub;
+        parseBody(sub);
+        sub = temp.sibling;
+
         if (currentToken.getValue().equals("return")){
-            matchByValue("return");
-            matchByType("SEMICOLON");
+            matchByValue("return",sub);
+            matchByType("SEMICOLON",sub);
         }
-        matchByValue("}");
+        matchByValue("}",sub);
     }
 
-    private void parseUpdate() {
+    private void parseUpdate(StringTreeNode sub) {
         if (currentToken.getType().equals("IDENTIFIER")) {
-            matchByValue(currentToken.getValue());
+            matchByValue(currentToken.getValue(),sub);
             if(currentToken.getValue().equals("++") || currentToken.getValue().equals("--")){
-                matchByValue(currentToken.getValue());
+                matchByValue(currentToken.getValue(),sub);
             } else if (currentToken.getValue().equals("+=") || currentToken.getValue().equals("-=")
                     || currentToken.getValue().equals("*=") || currentToken.getValue().equals("/=")) {
-                parseSignIncrement();
+                Token main = new Token("program node",-2,"Increment");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                StringTreeNode temp = sub;
+                parseSignIncrement(sub);
+                sub = temp.sibling;
+
             }
         } else if (currentToken.getValue().equals("++") || currentToken.getValue().equals("--")) {
-            parseIncrementDecrement();
+            Token main = new Token("program node",-2,"Increment decrement");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            StringTreeNode temp = sub;
+            parseIncrementDecrement(sub);
+            sub = temp.sibling;
         } else {
             throw new RuntimeException("Parsing Failed. Expected a valid update expression at line number: " + currentToken.getLineNumber());
         }
     }
 
-    private void parseSignIncrement() {
-        matchByValue(currentToken.getValue());
-        matchByType("NUMBER");
+    private void parseSignIncrement(StringTreeNode sub) {
+        matchByValue(currentToken.getValue(),sub);
+        matchByType("NUMBER",sub);
     }
 
-    private void parseIncrementDecrement() {
+    private void parseIncrementDecrement(StringTreeNode sub) {
         // Parse increment or decrement
-        matchByValue(currentToken.getValue());
-        matchByType("IDENTIFIER"); // Match variable name
+        matchByValue(currentToken.getValue(),sub);
+        matchByType("IDENTIFIER",sub); // Match variable name
     }
 
-    private void parseForInit() {
+    private void parseForInit(StringTreeNode sub) {
         if (currentToken.getValue().equals("int")) {
-            matchByValue("int");
+            matchByValue("int",sub);
             symbolType.put(currentToken.getValue(),"int");
-            matchByType("IDENTIFIER");
-            matchByType("ASSIGN_OP");
-            matchByType("NUMBER");
+            matchByType("IDENTIFIER",sub);
+            matchByType("ASSIGN_OP",sub);
+            matchByType("NUMBER",sub);
         }
         else if(currentToken.getType().equals("IDENTIFIER")) {
             String type = symbolType.get(currentToken.getValue());
@@ -602,10 +844,10 @@ public class Syntax_Analyzer {
                 throw new RuntimeException("Parsing Failed. variable is not initialized: (" +currentToken.getValue()+ ") at line number: "+currentToken.getLineNumber());
             }
             else if(type.equals("int")) {
-                matchByType("IDENTIFIER");
+                matchByType("IDENTIFIER",sub);
                 if(currentToken.getType().equals("ASSIGN_OP")){
-                    matchByType("ASSIGN_OP");
-                    matchByType("NUMBER");
+                    matchByType("ASSIGN_OP",sub);
+                    matchByType("NUMBER",sub);
                 }
             }
             else{
@@ -617,131 +859,198 @@ public class Syntax_Analyzer {
         }
     }
 
-    private void parseIfStatement() {
-        matchByValue("if");
-        matchByValue("(");
-        parseCondition();
-        matchByValue(")");
-        matchByType("LEFT_BRACE");
-        parseBody();
+    private void parseIfStatement(StringTreeNode sub) {
+        matchByValue("if",sub);
+        matchByValue("(", sub);
+
+        Token main = new Token("program node",-2,"Condition");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseCondition(sub);
+        sub = temp.sibling;
+
+        matchByValue(")", sub);
+        matchByType("LEFT_BRACE", sub);
+
+        main = new Token("program node",-2,"Body");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        temp = sub;
+        parseBody(sub);
+        sub = temp.sibling;
+
         if (currentToken.getValue().equals("return")){
-            matchByValue("return");
-            matchByType("SEMICOLON");
+            matchByValue("return", sub);
+            matchByType("SEMICOLON" , sub);
         }
-        matchByType("RIGHT_BRACE");
+        matchByType("RIGHT_BRACE", sub);
         if (currentToken.getValue().equals("else")) {
-            matchByValue("else");
+            matchByValue("else", sub);
             if (currentToken.getValue().equals("if")) {
                 // Parse else if
-                parseIfStatement();
+                main = new Token("program node",-2,"IF Statement");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                temp = sub;
+                parseIfStatement(sub);
+                sub = temp.sibling;
+
             } else {
-                matchByType("LEFT_BRACE");
-                parseBody();
+                matchByType("LEFT_BRACE", sub);
+
+                main = new Token("program node",-2,"Body");
+                sub = new StringTreeNode(main);
+                sub = sub.child;
+                temp = sub;
+                parseBody(sub);
+                sub = temp.sibling;
+
                 if (currentToken.getValue().equals("return")){
-                    matchByValue("return");
-                    matchByType("SEMICOLON");
+                    matchByValue("return", sub);
+                    matchByType("SEMICOLON", sub);
                 }
-                matchByType("RIGHT_BRACE");
+                matchByType("RIGHT_BRACE", sub);
             }
         }
     }
 
-    private void parseCondition() {
-        parseExpression();
+    private void parseCondition(StringTreeNode sub) {
+        Token main = new Token("program node",-2,"Expression");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseExpression(sub);
+        sub = temp.sibling;
+
         if (currentToken.getType().equals("GREATER_THAN_OR_EQUALS") ||
                 currentToken.getType().equals("EQUALS") || currentToken.getType().equals("NOT_EQUALS") ||
                 currentToken.getType().equals("LESS_THAN_OR_EQUALS") ||
                 currentToken.getType().equals("LESS_THAN") || currentToken.getType().equals("GREATER_THAN")) {
-            matchByValue(currentToken.getValue());
+            matchByValue(currentToken.getValue(), sub);
         } else {
             throw new RuntimeException("Parsing Failed. Expected relational operator at line number: " + currentToken.getLineNumber());
         }
-        parseExpression();
+        main = new Token("program node",-2,"Expression");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        temp = sub;
+        parseExpression(sub);
+        sub = temp.sibling;
     }
 
-    private void parseExpression() {
-        parseSimpleExpression();
+    private void parseExpression(StringTreeNode sub) {
+        Token main = new Token("program node",-2,"Simple Expression");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        parseSimpleExpression(sub);
+        sub = temp.sibling;
+
         while ((currentToken.getValue().equals("+") || currentToken.getValue().equals("-") ||currentToken.getValue().equals("*") ||
                 currentToken.getValue().equals("/") || currentToken.getValue().equals("!") || currentToken.getValue().equals("||")
                 || currentToken.getValue().equals("&&") || currentToken.getValue().equals("%"))) {
             if(currentToken.getValue().equals("||") || currentToken.getValue().equals("&&")){
-                matchByValue(currentToken.getValue());
-                parseCondition();
+                matchByValue(currentToken.getValue(), sub);
+                parseCondition(sub);
                 break;
             }
-            matchByValue(currentToken.getValue());
+            matchByValue(currentToken.getValue(), sub);
 
-            parseSimpleExpression();
+            main = new Token("program node",-2,"Simple Expression");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            temp = sub;
+            parseSimpleExpression(sub);
+            sub = temp.sibling;
         }
     }
 
-    private void parseSimpleExpression() {
+    private void parseSimpleExpression(StringTreeNode sub) {
         if (currentToken.getType().equals("IDENTIFIER")) {
             String varType = symbolType.get(currentToken.getValue());
             if(varType == null){
                 throw new RuntimeException("Parsing Failed. variable is not initialized: (" +currentToken.getValue()+ ") at line number: "+currentToken.getLineNumber());
             }
-            matchByValue(currentToken.getValue());
+            matchByValue(currentToken.getValue(), sub);
         } else if (currentToken.getType().equals("NUMBER")) {
-            matchByValue(currentToken.getValue());
+            matchByValue(currentToken.getValue(), sub);
         } else if (currentToken.getType().equals("STRING")) {
-            matchByValue(currentToken.getValue());
+            matchByValue(currentToken.getValue(), sub);
         } else if (currentToken.getType().equals("CHAR")) {
-            matchByValue(currentToken.getValue());
+            matchByValue(currentToken.getValue(), sub);
         } else if (currentToken.getValue().equals("(")) {
-            matchByValue("(");
-            parseExpression();
-            matchByValue(")");
+            matchByValue("(", sub);
+
+            Token main = new Token("program node",-2,"Expression");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            StringTreeNode temp = sub;
+            parseExpression(sub);
+            sub = temp.sibling;
+
+            matchByValue(")", sub);
         } else {
             throw new RuntimeException("Parsing Failed. Invalid expression at line number: " + currentToken.getLineNumber());
         }
     }
 
-    private void ParseSwitchCaseDeclaration() {
+    private void ParseSwitchCaseDeclaration(StringTreeNode sub) {
         // Match the 'switch' keyword
-        matchByValue("switch");
+        matchByValue("switch", sub);
 
         // Match the opening parenthesis after 'switch'
-        matchByValue("(");
+        matchByValue("(", sub);
 
         // Now, expect an expression after '('
         String varType = symbolType.get(currentToken.getValue());
         if(varType == null){
             throw new RuntimeException("Parsing Failed. variable is not initialized: (" +currentToken.getValue()+ ") at line number: "+currentToken.getLineNumber());
         }
-        matchByType("IDENTIFIER"); // Assuming IDENTIFIER represents the expression
+        matchByType("IDENTIFIER", sub); // Assuming IDENTIFIER represents the expression
 
         // Match the closing parenthesis after the expression
-        matchByValue(")");
+        matchByValue(")", sub);
 
         // Match the opening curly brace after the expression
-        matchByValue("{");
+        matchByValue("{", sub);
 
         // Detect the switch-case statements inside the switch block
-        detectSwitchCaseInsideBlock(varType);
+        Token main = new Token("program node",-2,"Case Beginning");
+        sub = new StringTreeNode(main);
+        sub = sub.child;
+        StringTreeNode temp = sub;
+        detectSwitchCaseInsideBlock(varType, sub);
+        sub = temp.sibling;
+
 
         // Match the closing curly brace after the switch block
-        matchByValue("}");
+        matchByValue("}", sub);
     }
-    private void detectSwitchCaseInsideBlock(String type) {
+    private void detectSwitchCaseInsideBlock(String type, StringTreeNode sub) {
         // Match the 'case' keyword
         while(!(currentToken.getValue().equals("}") || currentToken.getValue().equals("default") || currentToken.getValue().equals("EOF "))) {
-            matchByValue("case");
+            matchByValue("case", sub);
 
 
             // Now, expect a constant after 'case' *if int u need to make it in analyzer*
             if (type.equals("int")) {
-                matchByType("NUMBER");
+                matchByType("NUMBER", sub);
             } else if (type.equals("float")) {
-                matchByType("FLOAT_NUMBER");
+                matchByType("FLOAT_NUMBER", sub);
             } else if (type.equals("char")) {
-                matchByType("CHAR");
+                matchByType("CHAR", sub);
             } else if (type.equals("string")) {
-                matchByType("STRING");
+                matchByType("STRING", sub);
             }
             // Match the colon after the constant
-            matchByType("COLON");
-            parseCaseBody();
+            matchByType("COLON", sub);
+            Token main = new Token("program node",-2,"Case Body");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            StringTreeNode temp = sub;
+            parseCaseBody(sub);
+            sub = temp.sibling;
 //            if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("break")) {
 //                // Match the 'break' keyword
 //                matchByValue( "break");
@@ -751,18 +1060,34 @@ public class Syntax_Analyzer {
         }
         if (currentToken.getType().equalsIgnoreCase("KEYWORD") && currentToken.getValue().equalsIgnoreCase("default")) {
             // Match the 'default' keyword
-            matchByValue("default");
+            matchByValue("default", sub);
             // Match the colon after 'default'
-            matchByType("COLON");
-            parseBody();
+            matchByType("COLON", sub);
+
+            matchByType("COLON", sub);
+            Token main = new Token("program node",-2,"Body");
+            sub = new StringTreeNode(main);
+            sub = sub.child;
+            StringTreeNode temp = sub;
+            parseBody(sub);
+            sub = temp.sibling;
+
             if (currentToken.getValue().equals("return")){
-                matchByValue("return");
-                matchByType("SEMICOLON");
+                matchByValue("return", sub);
+                matchByType("SEMICOLON", sub);
             }
         }
     }
 
-    private void matchByType(String expectedType) {
+    private void matchByType(String expectedType, StringTreeNode p) {
+        if(root == null){
+            root = new StringTreeNode(currentToken);
+            tree = new StringTreeAsTreeForTreeLayout(root);
+            p = root.child;
+        } else {
+            p = new StringTreeNode(currentToken);
+            p = p.sibling;
+        }
         if (currentToken.getType().equals(expectedType)) {
             if(expectedType.equals("LEFT_BRACE"))
                 nestingLevel++;
@@ -775,7 +1100,52 @@ public class Syntax_Analyzer {
             throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
         }
     }
-    private void matchByValue(String value) {
+    private void matchByValue(String value , StringTreeNode p) {
+        if(root == null){
+            root = new StringTreeNode(currentToken);
+            tree = new StringTreeAsTreeForTreeLayout(root);
+            p = root.child;
+        } else {
+            p = new StringTreeNode(currentToken);
+            p = p.sibling;
+        }
+        if (currentToken.getValue().equals(value)) {
+            advance();
+        }
+        else{
+            throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+        }
+    }
+    private void matchByTypeChild(String expectedType, StringTreeNode p) {
+        if(root == null){
+            root = new StringTreeNode(currentToken);
+            tree = new StringTreeAsTreeForTreeLayout(root);
+            p = root.child;
+        } else {
+            p = new StringTreeNode(currentToken);
+            p = p.child;
+        }
+        if (currentToken.getType().equals(expectedType)) {
+            if(expectedType.equals("LEFT_BRACE"))
+                nestingLevel++;
+            if(expectedType.equals("RIGHT_BRACE"))
+                nestingLevel--;
+
+            advance();
+        }
+        else{
+            throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+        }
+    }
+    private void matchByValueChild(String value, StringTreeNode p) {
+        if(root == null){
+            root = new StringTreeNode(currentToken);
+            tree = new StringTreeAsTreeForTreeLayout(root);
+            p = root.child;
+        } else {
+            p = new StringTreeNode(currentToken);
+            p = p.child;
+        }
         if (currentToken.getValue().equals(value)) {
             advance();
         }
