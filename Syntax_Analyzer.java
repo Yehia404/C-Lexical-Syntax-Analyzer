@@ -83,8 +83,8 @@ public class Syntax_Analyzer {
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                createParseNode("INITIALIZATION","");
-                parseInitialization();
+                createParseNode("Assignment","");
+                parseAssignment();
                 while (!currentParseNode.getType().equals("Program")){
                     moveUpInParseTree();
                 }
@@ -354,8 +354,8 @@ public class Syntax_Analyzer {
                     }
                 }
                 else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                    createParseNode("Intialization","");
-                    parseInitialization();
+                    createParseNode("Assignment","");
+                    parseAssignment();
                     while (!currentParseNode.getType().equals("Body"))
                         moveUpInParseTree();
                 }
@@ -373,7 +373,7 @@ public class Syntax_Analyzer {
             }
     }
 
-    private void parseInitialization(){
+    private void parseAssignment(){
         boolean pre = false;
         if(currentToken.getType().equals("INCREMENT")){
             matchByType("INCREMENT");
@@ -666,8 +666,8 @@ public class Syntax_Analyzer {
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                createParseNode("Initialization", "");
-                parseInitialization();
+                createParseNode("Assignment", "");
+                parseAssignment();
                 while (!currentParseNode.getType().equals("Body"))
                     moveUpInParseTree();
             }
@@ -717,8 +717,8 @@ public class Syntax_Analyzer {
                 }
             }
             else if(currentToken.getType().equals("IDENTIFIER") || currentToken.getType().equals("INCREMENT") || currentToken.getType().equals("DECREMENT")){
-                createParseNode("Intialization", "");
-                parseInitialization();
+                createParseNode("Assignment", "");
+                parseAssignment();
                 while (!currentParseNode.getType().equals("Body"))
                     moveUpInParseTree();
             }
