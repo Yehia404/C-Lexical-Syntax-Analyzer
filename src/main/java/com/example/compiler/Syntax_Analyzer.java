@@ -125,7 +125,19 @@ public class Syntax_Analyzer {
         if (currentToken.getType().equals("SEMICOLON")) { //Declaration only
             matchByType("SEMICOLON");
             return;
-        } else if (currentToken.getType().equals("ASSIGN_OP") || currentToken.getType().equals("ADD_ASSIGN") || currentToken.getType().equals("SUB_ASSIGN") || currentToken.getType().equals("MULTIPLY_ASSIGN") || currentToken.getType().equals("DIVIDE_ASSIGN")) { // Declaration with initialization
+
+        }
+        else if(currentToken.getType().equals("LEFT_BRACE")){
+            matchByType("LEFT_BRACE");
+            ParseTreeNode parent = currentParseNode;
+            createParseNode("Enum-Expr-Body","");
+            parseEnum();
+            while (currentParseNode!=parent)
+                moveUpInParseTree();
+            matchByType("RIGHT_BRACE");
+            return;
+        }
+        else if (currentToken.getType().equals("ASSIGN_OP") || currentToken.getType().equals("ADD_ASSIGN") || currentToken.getType().equals("SUB_ASSIGN") || currentToken.getType().equals("MULTIPLY_ASSIGN") || currentToken.getType().equals("DIVIDE_ASSIGN")) { // Declaration with initialization
             if(currentToken.getType().equals("ASSIGN_OP"))
                 matchByType("ASSIGN_OP");
             if(currentToken.getType().equals("ADD_ASSIGN"))
@@ -134,7 +146,7 @@ public class Syntax_Analyzer {
                 matchByType("SUB_ASSIGN");
             if(currentToken.getType().equals("DIVIDE_ASSIGN"))
                 matchByType("DIVIDE_ASSIGN");
-            if(currentToken.getType().equals("ASSIGN_ASSIGN"))
+            if(currentToken.getType().equals("MULTIPLY_ASSIGN"))
                 matchByType("MULTIPLY_ASSIGN");
 
 
@@ -149,6 +161,7 @@ public class Syntax_Analyzer {
                 }
                 advance();
                 if (currentToken.getType().equals("LEFT_PAREN")){
+                    ParseTreeNode parent = currentParseNode;
                     retract();
                     matchByType("IDENTIFIER");
                     if (tokenType.equals(functionType)) {
@@ -161,6 +174,7 @@ public class Syntax_Analyzer {
                         int typeCounter = 0;
 
                         while (!(currentToken.getType().equals("RIGHT_PAREN"))) {
+                            createParseNode("Param-Optional-List","");
                             String paramName;
                             String paramType;
                             if(currentToken.getType().equals("IDENTIFIER")){
@@ -206,7 +220,8 @@ public class Syntax_Analyzer {
                         if (argumentCounter < paramLength || argumentCounter > paramLength) {
                             throw new RuntimeException("Parsing failed. Unexpected token (Invalid Number of arguments), " + "Line Number: " + currentToken.getLineNumber());
                         }
-                        moveUpInParseTree();
+                        while (currentParseNode != parent)
+                            moveUpInParseTree();
                         matchByType("RIGHT_PAREN");
                     }
                     else {
@@ -367,18 +382,41 @@ public class Syntax_Analyzer {
                     while (!currentParseNode.getType().equals("Body"))
                         moveUpInParseTree();
                 }
-                else{
-                    throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
-                }
-
-                if(currentToken.getType().equals("RIGHT_BRACE")){
+                else if(currentToken.getType().equals("RIGHT_BRACE")){
                     moveUpInParseTree();
                     matchByType("RIGHT_BRACE");
                 }
                 else if (currentToken.getType().equals("EOF")){
                     throw new RuntimeException("Parsing failed. Unexpected token (Missing Brace): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                 }
+
+                else{
+                    throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                }
+
+
             }
+    }
+    private void parseEnum() {
+        while (!currentToken.getType().equals("RIGHT_BRACE")) {
+            createParseNode("Enum_List","");
+            createParseNode("Enumerator","");
+            String enumValue = identifier();
+            symbolType.put(enumValue, "int");
+
+            if (currentToken.getType().equals("ASSIGN_OP")) {
+                createParseNode("Enumerator_Value","");
+                matchByType("ASSIGN_OP");
+                matchByType("NUMBER");
+                moveUpInParseTree();
+            }
+
+            if (currentToken.getType().equals("COMMA")) {
+                matchByType("COMMA");
+            } else {
+                break;
+            }
+        }
     }
 
     private void parseAssignment(){
@@ -454,7 +492,8 @@ public class Syntax_Analyzer {
                 currentToken.getValue().equalsIgnoreCase("char") ||
                 currentToken.getValue().equalsIgnoreCase("double") ||
                 currentToken.getValue().equalsIgnoreCase("long")||
-                currentToken.getValue().equalsIgnoreCase("short")){
+                currentToken.getValue().equalsIgnoreCase("short") ||
+                currentToken.getValue().equalsIgnoreCase("enum")){
             matchByType("KEYWORD");
             return tokenType;
         }
@@ -614,6 +653,7 @@ public class Syntax_Analyzer {
     private void parseParameters(String functionName) {
         List<String> paramTypes = new ArrayList<>();
         while(!(currentToken.getType().equals("RIGHT_PAREN"))) {
+            createParseNode("Param-Optional-List","");
             createParseNode("Parameter","");
             String paramType = type();
             if (paramType == null) {
