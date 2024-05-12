@@ -78,7 +78,7 @@ public class Lexical_Analyzer {
         Matcher commentMatcher = commentPattern.matcher(line);
 
         if (commentMatcher.find()) {
-            tokens.add(new Token("COMMENT", lineNumber, line.substring(commentMatcher.start())));
+//            tokens.add(new Token("COMMENT", lineNumber, line.substring(commentMatcher.start())));
             return tokens;
         }
 

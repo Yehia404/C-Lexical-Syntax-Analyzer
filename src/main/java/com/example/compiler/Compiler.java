@@ -10,7 +10,7 @@ public class Compiler {
 
     public static void main(String[] args) {
         Compiler compiler = new Compiler();
-        compiler.compile("src/main/java/com/example/compiler/test5.c");
+        compiler.compile("src/main/java/com/example/compiler/test.c");
     }
 
     public void compile(String sourceCodeFile) {
