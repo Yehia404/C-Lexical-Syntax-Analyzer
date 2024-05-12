@@ -1,5 +1,6 @@
 package com.example.compiler;
 
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -169,6 +170,10 @@ public class Syntax_Analyzer {
                         createParseNode("Parameters_List","");
                         List<String> parameters;
                         parameters = funcParameters.get(functionName);
+                        if (parameters == null){
+                            throw new RuntimeException("Parsing failed. Unexpected token (Function not defined) " + " Line Number: " + currentToken.getLineNumber());
+                        }
+
                         int paramLength = parameters.size();
                         int argumentCounter = 0;
                         int typeCounter = 0;
@@ -183,6 +188,9 @@ public class Syntax_Analyzer {
                                     throw new RuntimeException("Parsing failed. Unexpected token (Expected an argument name): " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
                                 }
                                 paramType = symbolType.get(paramName);
+                                if (paramType == null){
+                                    throw new RuntimeException("Parsing failed. Unexpected token (Variable is not defined): " + paramName + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
+                                }
                             }
                             else if (currentToken.getType().equals("NUMBER")){
                                 paramType = "int";

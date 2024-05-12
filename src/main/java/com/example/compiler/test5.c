@@ -9,5 +9,5 @@ int main(){
     int y;
     float l;
 
-    int a = sum (z,y,l);
+    int a = sum (z,y,g);
 }
