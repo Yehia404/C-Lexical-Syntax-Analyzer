@@ -554,6 +554,7 @@ public class Syntax_Analyzer {
     }
 
     private void parseTerm(String tokentype) {
+        createParseNode("Term","");
         parseFactor(tokentype);
         while ((currentToken.getType().equals("ADD_OP") || currentToken.getType().equals("MOD_OP") || currentToken.getType().equals("MUL_OP") ||
                 currentToken.getType().equals("DIV_OP") || currentToken.getType().equals("SUB_OP") ) && !(currentToken.getType().equals("SEMICOLON"))) {
@@ -582,9 +583,11 @@ public class Syntax_Analyzer {
                 break;
             }
         }
+        moveUpInParseTree();
     }
 
     private void parseFactor(String tokentype) {
+        createParseNode("Factor","");
         if (currentToken.getType().equals("LEFT_PAREN")) {
             matchByType("LEFT_PAREN");
             parseNumOperation(tokentype);
@@ -592,6 +595,7 @@ public class Syntax_Analyzer {
         } else {
             parseNumber(tokentype);
         }
+        moveUpInParseTree();
     }
 
 

@@ -7,7 +7,7 @@ int sum (int a, int b,int c){
 int main(){
     int z;
     int y;
-    float l;
+    int l;
 
-    int a = sum (z,y,g);
+    int a = sum (z,y,l);
 }
