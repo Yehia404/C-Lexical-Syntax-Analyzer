@@ -128,7 +128,7 @@ public class Syntax_Analyzer {
             return;
 
         }
-        else if(currentToken.getType().equals("LEFT_BRACE")){
+        else if(currentToken.getType().equals("LEFT_BRACE")){  //ENUM
             matchByType("LEFT_BRACE");
             ParseTreeNode parent = currentParseNode;
             createParseNode("Enum-Expr-Body","");
@@ -244,13 +244,13 @@ public class Syntax_Analyzer {
 
             }
             else if (currentToken.getType().equals("LEFT_PAREN") || currentToken.getType().equals("NUMBER") || currentToken.getType().equals("FLOAT_NUMBER")){ // Declaration with Number (Operations)
-                parseNumOperation(tokenType);
+                parseNumOperation(tokenType); //Arithmetic Operation
             }
             else {
                 throw new RuntimeException("Parsing failed. Unexpected token: " + currentToken.getValue() + " Token Type: " + currentToken.getType() + " Line Number: " + currentToken.getLineNumber());
             }
 
-        }else if (currentToken.getType().equals("IDENTIFIER")){
+        }else if (currentToken.getType().equals("IDENTIFIER")){ //Function Call with No Assignment
             String functionName = currentToken.getValue();
             matchByType("IDENTIFIER");
             if(currentToken.getType().equals("LEFT_PAREN")){
@@ -677,7 +677,7 @@ public class Syntax_Analyzer {
             }
             symbolType.put(paramName,paramType);
             paramTypes.add(paramType);
-            if (currentToken.getType().equals("COMMA")) {
+             if (currentToken.getType().equals("COMMA")) {
                 moveUpInParseTree();
                 matchByType("COMMA");
                 if (currentToken.getType().equals("RIGHT_PAREN")) {
